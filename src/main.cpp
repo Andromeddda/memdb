@@ -1,24 +1,20 @@
 #include <cstdio>
 #include <vector>
 #include <iostream>
-#include "cell.h"
+
+#include "table.h"
+#include "command.h"
 
 using namespace std;
 using namespace memdb;
 
-
 int main(void)  {
-    vector<Cell> cells;
 
-    cells.push_back(Cell(true));
-    cells.push_back(Cell("hui"));
-    cells.push_back(Cell(1488));
-    cells.push_back(Cell());
+    string a = "hello";
+    string b = ", world!";
 
-    for (Cell c : cells) {
-        cout << c.DataToString() << ", ";
-    }
-    cout << '\n';
+    cout << sizeof(memdb::cell_t);
+
     return 0;
 }
 
