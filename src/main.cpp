@@ -8,10 +8,8 @@
 using namespace std;
 using namespace memdb;
 
-int main(void)  {
-
-    string a = "hello";
-    string b = ", world!";
+int main(void)  
+{
 
     cout << sizeof(memdb::cell_t);
 

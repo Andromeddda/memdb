@@ -23,6 +23,13 @@
 
 namespace memdb 
 {
+    // Data typed stored in table cell
+    using Int32     = uint32_t;
+    using Bool      = bool;
+    using String    = std::array<signed char,   MAX_STRING_DATA>;
+    using Bytes     = std::array<unsigned char, MAX_STRING_DATA>;
+
+    // Flags for of data stored in one table column
     enum ColumnType {
         ColumnTypeInt32,
         ColumnTypeBool,
@@ -30,43 +37,48 @@ namespace memdb
         ColumnTypeBytes
     };
 
-    // Types of data stored in table cell
-    using Int32     = uint32_t;
-    using Bool      = bool;
-    using String    = std::array<signed   char, MAX_STRING_DATA>;
-    using Bytes     = std::array<unsigned char, MAX_STRING_DATA>;
-
     struct ColumnDescription {
         const ColumnType      type_;
         const std::string     name_;
         const unsigned char   attributes_;
 
-        ColumnDescription(
-            ColumnType type, 
-            const char* name, 
+        ColumnDescription(ColumnType type, const char* name, 
             unsigned char attributes);
 
-        ColumnDescription(
-            ColumnType type, 
-            const std::string& name, 
+        ColumnDescription(ColumnType type, const std::string& name, 
             unsigned char attributes);
 
         ~ColumnDescription() = default;
     };
 
-    // Dynamic type of cell data, stored as type-safe union 
     typedef
         typename std::variant<Int32, Bool, String, Bytes>
         cell_t;
 
-    using row_t = typename std::vector<cell_t>;
+    // Hash function for indexing String and Bytes types
+    struct Hash {
+        size_t operator() (const cell_t& cell) const;
+    };
+
+    typedef
+        typename std::vector<cell_t>
+        row_t;
+
+    typedef
+        typename std::unordered_map<cell_t, size_t, Hash>
+        index_t;
+
 
     class Table 
     {
     public:
         Table() = delete;
-        Table(const std::string& name);
-        Table(const char* name);
+
+        Table(std::string&& table_name,
+            std::vector<ColumnDescription>&& columns);
+
+        Table(const char* name,
+            std::vector<ColumnDescription>&& columns);
 
         Table(Table&& other) = default;
         Table(const Table& other) = default;
@@ -74,17 +86,20 @@ namespace memdb
         Table& operator= (Table&& other) = default;
         Table& operator= (const Table& other) = default;
 
-    private:
-        const char*
-            name_;            // Table name
+        std::string name();
+        void        display();
 
-        std::vector<ColumnDescription>
-            columns_;         //  List of column descriptions (type, name and attributes)
+    private:
+        const std::string
+            name_;          // Table name
+
+        const std::vector<ColumnDescription>
+            columns_;       //  List of column descriptions (type, name and attributes)
 
         std::vector<row_t> 
-            rows_;             // List of rows
+            rows_;          // List of rows
 
-        std::unordered_map<cell_t, size_t>
+        index_t
             index_;         // Map that associates cell data with row number
     };
 } // namespace memdb
