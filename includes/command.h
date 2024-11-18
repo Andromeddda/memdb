@@ -1,8 +1,11 @@
 #ifndef HEADER_GUARD_COMMAND_H
 #define HEADER_GUARD_COMMAND_H
 
+#include <memory>
+
 #include "table.h"
 #include "database.h"
+#include "where.h"
 
 /* 
 
@@ -28,7 +31,7 @@ namespace memdb
     public:
         SQLCommand();
         virtual ~SQLCommand();
-        virtual Table* execute(Database* database) = 0;
+        virtual TablePointer execute(Database* database) = 0;
     };
 
     class GetTable;

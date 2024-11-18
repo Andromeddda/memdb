@@ -30,8 +30,8 @@ namespace memdb {
             const char* name)
         : name_(name) {}
 
-        // Returns a table from database by name
-        Table* execute(Database* database) override;
+        // Return a pointer to existing table from database
+        TablePointer execute(Database* database) override;
 
     private:
         const std::string
@@ -54,55 +54,78 @@ namespace memdb {
         ~SQLCreateTable() = default;
 
 
-        // Allocates table and returns pointer to it
-        Table* execute(Database* database) override;
+        // Allocate table
+        // Return pointer to it
+        TablePointer execute(Database* database) override;
 
     private:
         const std::string
-            name_;
+            name_; // Name of the table to create
 
         const std::vector<ColumnDescription>
-            columns_;
+            columns_; // Column descriptions
     };
-        class SQLInsert : public SQLCommand
-        {
-        public:
-            SQLInsert(
-                std::string&& name, 
-                row_t&& row)
-            : name_(name), row_(row) {}
 
-            SQLInsert(
-                const char*   name, 
-                row_t&& row)
-            : name_(name), row_(row) {}
+    class SQLInsert : public SQLCommand
+    {
+    public:
+        SQLInsert(
+            std::string&& name, 
+            row_t&& row)
+        : name_(name), row_(row) {}
 
-            ~SQLInsert() = default;
+        SQLInsert(
+            const char*   name, 
+            row_t&& row)
+        : name_(name), row_(row) {}
 
-            Table* execute(Database* database) override;
+        ~SQLInsert() = default;
 
-        private:
-            const std::string
-                name_;
+        // Insert a row_ to a table with provided name
+        // Return a smart pointer to the same table
+        TablePointer execute(Database* database) override;
 
-            row_t
-                row_;
-        };
+    private:
+        const std::string
+            name_; // Name of the table to insert to
+
+        row_t
+            row_; // A row to insert
+    };
 
     class SQLSelect : public SQLCommand
     {
     public:
        	SQLSelect();
-        Table* execute(Database* database) override;
+
+        // Allocate new table
+        TablePointer execute(Database* database) override;
 
     private:
    		std::vector<std::pair<std::string, std::string>>
-   			column_names_; // Pairs of table-column names
+   			column_names_;  // Pairs of table-column names
 
         SQLCommand*
-            argument_;
+            argument_;  // A table to select from, represented as a command.
+                        // If the table is provided straightforward by name, GetTable class is used
 
+        WhereStatement
+            where_;     // Expression tree of conditions provided with WHERE 
+    };
 
+    class SQLUpdate : public SQLCommand
+    {
+    public:
+        SQLUpdate();
+
+        TablePointer execute(Database* database) override;
+
+    private:
+        std::vector<std::pair<std::string, std::string>>
+            column_names_;  // Pairs of table-column names
+
+        WhereStatement
+            where_;     // Expression tree of conditions provided with WHERE 
     };
 
 

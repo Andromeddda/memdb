@@ -7,6 +7,7 @@
 #include <iostream>
 #include <variant>
 #include <unordered_map>
+#include <ostream>
 
 #include <cstdio>
 #include <cstring>
@@ -68,10 +69,15 @@ namespace memdb
         typename std::unordered_map<cell_t, size_t, Hash>
         index_t;
 
-
+    // 
+    // Table of a relational database
+    // with fixed name and set of columns
+    //
     class Table 
     {
     public:
+        // Table is not default constructible
+        // name and columns are required
         Table() = delete;
 
         Table(std::string&& table_name,
@@ -86,15 +92,18 @@ namespace memdb
         Table& operator= (Table&& other) = default;
         Table& operator= (const Table& other) = default;
 
+        // Getter for table name
         std::string name();
-        void        display();
+
+        // Print the table to the output stream
+        void        display(std::ostream& os);    
 
     private:
         const std::string
             name_;          // Table name
 
         const std::vector<ColumnDescription>
-            columns_;       //  List of column descriptions (type, name and attributes)
+            columns_;       // List of column descriptions (type, name and attributes)
 
         std::vector<row_t> 
             rows_;          // List of rows

@@ -2,7 +2,7 @@
 
 namespace memdb
 {
-    void Database::add_table(Table* table) 
+    void Database::add_table(TablePointer table) 
     {
         std::string name = table->name();
         
@@ -15,7 +15,7 @@ namespace memdb
         tables_[name] = table;
     }
 
-    Table* Database::get_table(const std::string& name)
+    TablePointer Database::get_table(const std::string& name)
     {
         if (tables_.find(name) == tables_.end())
             throw TableDoNotExistException(name);
