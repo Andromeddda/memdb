@@ -69,14 +69,13 @@ namespace memdb
         typename std::unordered_map<cell_t, size_t, Hash>
         index_t;
 
-    // 
-    // Table of a relational database
-    // with fixed name and set of columns
-    //
+    /* 
+        Table of a relational database with fixed name and set of columns
+    */
     class Table 
     {
     public:
-        // Table is not default constructible
+        // Table is not default constructible,
         // name and columns are required
         Table() = delete;
 
@@ -96,7 +95,28 @@ namespace memdb
         std::string name();
 
         // Print the table to the output stream
-        void        display(std::ostream& os);    
+        void display(std::ostream& os);
+
+        //
+        // Modification methods
+        //
+        void insert_row(row_t&& row);   /*  Insert new row
+                                            Replace existing row if one of unique keys already exist */
+
+        void insert_row_unordered(
+            std::unordered_map<std::string, cell_t>&& row); /*  Insert new row, represented as a map where
+                                                                keys are column names, values are cell data.
+                                                                Replace existing row if one of unique keys already exist */
+        
+        row_t get_row(const std::string& index_column,
+            const cell_t& index);   /*  Get row by index
+                                        Return empty if index doesn't exist
+                                        Throw exception if column doesn't exist or if it's not unique */
+
+        void delete_row(const std::string& index_column,
+            const cell_t& index);   /*  Delete row by index
+                                        Do nothing if index doesn't exist
+                                        Throw exception if column doesn't exist or if it's not unique */
 
     private:
         const std::string

@@ -1,4 +1,14 @@
 #include "parser.h"
+#include "command.h"
+#include "table.h"
+#include "database.h"
+#include "where.h"
+
+#include <regex>
+#include <string>
+#include <cstring>
+#include <iostream>
+#include <ctype.h>
 
 namespace memdb 
 {
