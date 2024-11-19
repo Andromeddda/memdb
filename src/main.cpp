@@ -7,8 +7,7 @@
 #include <ctype.h>
 #include <utility>
 
-#include "table.h"
-#include "command.h"
+#include "memdb.h"
 
 using namespace std;
 using namespace memdb;
@@ -16,6 +15,13 @@ using namespace memdb;
 
 int main(void)  
 {
+    // Parser p = Parser("{key, unique} id : string");
 
+    // ColumnDescription c;
+
+    // bool res = p.parse_column_description(c);
+
+    // if (res)
+    //     cout << (int)c.attributes_ << ", " << c.name_ << ", " << (int)c.type_ << '\n';
     return 0;
 }

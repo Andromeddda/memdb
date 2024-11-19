@@ -50,7 +50,7 @@ namespace memdb
 
         SQLCommand* parse();
 
-    private:
+    // private:
         typedef std::string::const_iterator Position;
         std::string query_;
 
@@ -81,7 +81,8 @@ namespace memdb
         bool parse_attribute(ColumnAttribute& ret);
         bool parse_attribute_list(unsigned char& ret);
         bool parse_column_type(ColumnType& ret);
-        bool parse_column_description(ColumnDescription& ret);
+        bool parse_column_description(ColumnDescription &ret);
+        bool parse_column_description_list(std::vector<ColumnDescription>& ret);
 
         // parsing rows
         bool parse_row_ordered(row_t& ret);

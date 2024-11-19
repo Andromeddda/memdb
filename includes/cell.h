@@ -35,8 +35,8 @@ namespace memdb
         Cell() = default;
         Cell(Int32 value);
         Cell(Bool value);
-        Cell(std::string& value);
-        Cell(Bytes&& value);
+        Cell(const std::string& value);
+        Cell(const std::vector<std::byte>& value);
 
         Cell(const Cell& other) = default;
         Cell(Cell&& other) = default;

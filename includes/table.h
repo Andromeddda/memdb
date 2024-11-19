@@ -31,23 +31,29 @@ namespace memdb
         Autoincrement = 4
     };
 
-    struct ColumnDescription {
-        const ColumnType      type_;
-        const std::string     name_;
-        const unsigned char   attributes_;
+    struct ColumnDescription 
+    {
+        ColumnType      type_;
+        std::string     name_;
+        unsigned char   attributes_;
 
+        ColumnDescription();
         ColumnDescription(ColumnType type, const char* name, 
             unsigned char attributes);
 
         ColumnDescription(ColumnType type, const std::string& name, 
             unsigned char attributes);
 
+        ColumnDescription(const ColumnDescription& other) = default;
+        ColumnDescription(ColumnDescription&& other) = default;
+
+        ColumnDescription& operator=(const ColumnDescription& other) = default;
+        ColumnDescription& operator=(ColumnDescription&& other) = default;
+
         ~ColumnDescription() = default;
     };
 
-    typedef Cell
-        //typename std::variant<Int32, Bool, String, Bytes>
-        cell_t;
+    typedef Cell cell_t;
 
     // Lexicographical comparison of two cells
     struct CellCompare {

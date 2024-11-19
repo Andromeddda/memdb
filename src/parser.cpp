@@ -37,13 +37,20 @@ namespace memdb
             {"BY",         By}
         };
 
+    static const std::unordered_map<std::string, ColumnAttribute>
+        str_to_attr_mp {
+            {"key", Key},
+            {"unique", Unique},
+            {"autoincrement", Autoincrement}
+        };
+
     unsigned char char_to_hex(char a)
     {
         if (!isxdigit(a)) 
             throw InvalidHexValueException();
         if (isdigit(a))
             return a - '0';
-        return tolower(a) - 'a' + 1;
+        return tolower(a) - 'a' + 10;
     }
 
     unsigned char two_chars_to_hex(char a, char b)
@@ -114,6 +121,19 @@ namespace memdb
 
         assert(str_to_keyword_mp.find(str) != str_to_keyword_mp.end());
         return str_to_keyword_mp.at(str); // return command type from map
+    }
+
+    ColumnAttribute str_to_attr(std::string& str)
+    {
+        assert(str_to_attr_mp.find(str) != str_to_attr_mp.end());
+        return str_to_attr_mp.at(str); // return attribute from map
+    }
+
+    Parser::Parser(std::string&& query)
+    : query_(query), pos_(), end_()
+    { 
+        pos_ = query_.begin();
+        end_ = query_.end();
     }
 
     bool Parser::parse_pattern(std::regex regexp)
@@ -238,7 +258,7 @@ namespace memdb
     bool Parser::parse_int(int& ret)
     {
         static const std::regex
-            pattern("[1-9][0-9]*");
+            pattern("([1-9][0-9]*)|([0-9])");
 
         std::string str;
         bool res = parse_pattern(pattern, str);
@@ -248,6 +268,21 @@ namespace memdb
 
         return res;
     }
+
+    bool Parser::parse_bool(bool& ret)
+    {
+        static const std::regex
+            pattern("(true)|(false)");
+
+        std::string str;
+        bool res = parse_pattern(pattern, str);
+
+        if (res)
+            ret = (str == "true") ? true : false;
+
+        return res;
+    }
+
 
     bool Parser::parse_string(std::string& ret)
     {
@@ -285,25 +320,163 @@ namespace memdb
         return true;
     }
 
-    // bool parse_cell_data(cell_t& ret)
-    // {
-    //     bool res = false;
+    bool Parser::parse_cell_data(cell_t& ret)
+    {
+        int int_val;
+        bool bool_val;
+        std::string str_val;
+        std::vector<std::byte> bytes_val;
 
-    //     int int_value;
-    //     bool bool_value;
-    //     std::string& string_value;
-    //     std::vector
+        bool res = false;
+        if ((res = parse_int(int_val)))
+            ret =  cell_t(int_val);
 
-    //     return res;
-    // }
+        if ((res = parse_bool(bool_val)))
+            ret = cell_t(bool_val);
 
-    // bool Parser::parse_row_ordered(row_t& ret)
-    // {
-    //     static const std::regex 
-    //         pattern{"\\(.+\\)"};
-    //     return parse_pattern(pattern, ret);
-    // }
+        if ((res = parse_string(str_val)))
+            ret = cell_t(str_val);
 
+        if ((res = parse_bytes(bytes_val)))
+            ret = cell_t(bytes_val);
+        return res;
+    }
+
+    bool Parser::parse_attribute(ColumnAttribute& ret) 
+    {
+        static const std::regex 
+            pattern{"(key)|(unique)|(autoincrement)"};
+
+        std::string str;
+        bool res = parse_pattern(pattern, str);
+        if (res)
+            ret = str_to_attr(str);
+        return res;
+    }
+
+    bool Parser::parse_attribute_list(unsigned char& ret) 
+    {
+        ret = 0;
+
+        static const std::regex 
+            open_figure{"\\{"};
+
+        static const std::regex 
+            close_figure{"\\}"};
+
+        if (!parse_pattern(open_figure)) {
+            return false;
+        }
+
+        parse_whitespaces();
+        
+        ColumnAttribute attr;
+        bool end_of_list = false;
+
+        while (!end_of_list) {
+            if (!parse_attribute(attr))
+                throw AttributeException();
+
+            ret |= attr;
+            end_of_list = !parse_comma();
+        }
+
+        parse_whitespaces();
+        if (!parse_pattern(close_figure))
+            throw AttributeException();
+
+        return true;
+    }
+
+    bool Parser::parse_column_type(ColumnType& ret)
+    {
+        static const std::regex 
+            pattern{"(int32)|(bool)|(string(\\[[1-9][0-9]*\\])?)|(bytes(\\[[1-9][0-9]*\\])?)"};
+
+        std::string str;
+        bool res = parse_pattern(pattern, str);
+
+        if (!res) return false;
+
+        switch (str[1])
+        {
+        case 'n': ret = ColumnTypeInt32; break;
+        case 'o': ret = ColumnTypeBool; break;
+        case 't': ret = ColumnTypeString; break;
+        case 'y': ret = ColumnTypeBytes; break;
+        }
+
+        return true;
+    }
+
+    bool Parser::parse_column_description(ColumnDescription& ret)
+    {
+        bool parsed_attr = false, parsed_name = false, parsed_type = false;
+
+        unsigned char attr = 0;
+        std::string name;
+        ColumnType type;
+
+
+        parsed_attr = parse_attribute_list(attr);
+        parse_whitespaces();
+        parsed_name = parse_name(name);
+
+        if (parsed_attr && !parsed_name)
+
+        if (parsed_attr && !parse_name(name))
+            throw InvalidColumnDescriptionException();
+
+        if (parsed_name && !parse_colon())
+            throw InvalidColumnDescriptionException();
+
+        parsed_type = parse_column_type(type);
+
+        if (parsed_name && !parsed_type)
+            throw InvalidColumnDescriptionException();
+
+        ret = ColumnDescription(type, name, attr);
+
+        return parsed_attr && parsed_name && parsed_type;
+    }
+
+    bool Parser::parse_column_description_list(std::vector<ColumnDescription>& ret) 
+    {
+        static const std::regex 
+            open_par{"\\("};
+
+        static const std::regex 
+            close_par{"\\)"};
+
+        if (!parse_pattern(open_par)) {
+            return false;
+        }
+
+        parse_whitespaces();
+        
+        bool end_of_list = false;
+        ColumnDescription description;
+
+        while (!end_of_list) {
+            if (!parse_column_description(description))
+                throw InvalidColumnDescriptionException();
+
+            ret.push_back(description);
+            end_of_list = !parse_comma();
+        }
+
+        parse_whitespaces();
+        if (!parse_pattern(close_par))
+            throw InvalidColumnDescriptionException();
+
+        return true;
+    }
+
+    // bool Parser::parse_row_ordered(row_t& ret);
+    // bool Parser::parse_row_unordered(std::unordered_map<std::string, cell_t>& ret);
+    // bool Parser::parse_column_name(std::pair<std::string, std::string>& ret);
+    // bool Parser::parse_set_assignment(SetAssignment& ret);
+    // bool Parser::parse_where_condition(WhereStatement& ret);
 } // namespace memdb
 
 

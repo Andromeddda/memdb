@@ -73,6 +73,22 @@ public:
 	}
 };
 
+class AttributeException : public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "Invalid attribute list\n"; 
+	}
+};
+
+class InvalidColumnDescriptionException : public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "Invalid column description\n"; 
+	}
+};
+
 
 
 #endif // HEADER_GUARD_DB_EXCEPTIONS_H

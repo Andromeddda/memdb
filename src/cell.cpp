@@ -12,7 +12,7 @@ namespace memdb {
 		value_(value)
 	{ }
 
-	Cell::Cell(std::string& value)
+	Cell::Cell(const std::string& value)
 	{ 
 		if (value.size() > MAX_STRING_DATA)
 			throw MaxLengthExceededException();
@@ -22,7 +22,7 @@ namespace memdb {
 		value_ = std::move(a);
 	}
 
-	Cell::Cell(Bytes&& value)
+	Cell::Cell(const std::vector<std::byte>& value)
 	{ 
 		if (value.size() > MAX_STRING_DATA)
 			throw MaxLengthExceededException();

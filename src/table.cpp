@@ -6,6 +6,10 @@ namespace memdb
     //
     // Column description
     //
+    ColumnDescription::ColumnDescription()
+    : type_(ColumnTypeInt32), name_(), attributes_(0)
+    {}
+
     ColumnDescription::ColumnDescription(
         ColumnType            type, 
         const std::string&    name, 
