@@ -472,8 +472,77 @@ namespace memdb
         return true;
     }
 
-    // bool Parser::parse_row_ordered(row_t& ret);
-    // bool Parser::parse_row_unordered(std::unordered_map<std::string, cell_t>& ret);
+    bool Parser::parse_row_ordered(row_t& ret)
+    {
+        static const std::regex 
+            open_par{"\\("};
+
+        static const std::regex 
+            close_par{"\\)"};
+
+        if (!parse_pattern(open_par)) {
+            return false;
+        }
+
+        parse_whitespaces();
+        
+        bool end_of_list = false;
+
+        while (!end_of_list) {
+            cell_t cell = cell_t();
+            parse_cell_data(cell);
+
+            ret.push_back(cell);
+            end_of_list = !parse_comma();
+        }
+
+        parse_whitespaces();
+        if (!parse_pattern(close_par))
+            throw InvalidPositionedRowException();
+
+        return true;
+    }
+
+    bool Parser::parse_row_unordered(std::unordered_map<std::string, cell_t>& ret)
+    {
+        static const std::regex 
+            open_par{"\\("};
+
+        static const std::regex 
+            close_par{"\\)"};
+
+        if (!parse_pattern(open_par)) {
+            return false;
+        }
+
+        parse_whitespaces();
+        
+        bool end_of_list = false;
+
+        while (!end_of_list) {
+            cell_t cell = cell_t();
+            std::string name = "";
+
+            if (!parse_name(name))
+                throw InvalidAssignmentRowException();
+
+            if (!parse_equal_sign())
+                throw InvalidAssignmentRowException();
+
+            if (!parse_cell_data(cell))
+                throw InvalidAssignmentRowException();
+
+            ret[name] = cell;
+            end_of_list = !parse_comma();
+        }
+
+        parse_whitespaces();
+        if (!parse_pattern(close_par))
+            throw InvalidAssignmentRowException();
+
+        return true;
+    }
+    
     // bool Parser::parse_column_name(std::pair<std::string, std::string>& ret);
     // bool Parser::parse_set_assignment(SetAssignment& ret);
     // bool Parser::parse_where_condition(WhereStatement& ret);

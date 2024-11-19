@@ -103,10 +103,19 @@ namespace memdb
 
 Commands:
 
-1. 
-- CREATE TABLE <NAME> [{attributes}] <name>: <type> [= <value>]
-- INSERT (<values>) TO <table>
+1.
++ CREATE TABLE <NAME> [{attributes}] <name>: <type> [= <value>]
+        create table users ({key, autoincrement} id :
+        int32, {unique} login: string[32], password_hash: bytes[8], is_admin:
+        bool = false)
+
++ INSERT (<values>) TO <table>
+        insert (,"vasya", 0xdeadbeefdeadbeef) to users
+        insert (login = "vasya", password_hash = 0xdeadbeefdeadbeef)
+
 - SELECT <columns> FROM <table> [WHERE <condition>]
+        select id, login from users where is_admin || id < 10
+
 - UPDATE <table> SET <assignments> [WHERE <condition>]
 - DELETE <table> WHERE <condition>
 

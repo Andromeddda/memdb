@@ -151,6 +151,9 @@ run: $(RUN_EXECUTABLE) Makefile
 gdb: $(RUN_EXECUTABLE) Makefile
 	gdb ./$<
 
+stats:
+	git ls-files | xargs wc -l
+
 #-------
 # Other
 #-------
@@ -160,4 +163,4 @@ clean:
 	rm -rf $(BUILD)
 
 # List of non-file targets:
-.PHONY: clean run gdb tests
+.PHONY: clean run gdb tests stats

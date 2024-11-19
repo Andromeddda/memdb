@@ -89,6 +89,22 @@ public:
 	}
 };
 
+class InvalidAssignmentRowException : public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "Invalid row initialization by unordered assignment\n"; 
+	}
+};
+
+class InvalidPositionedRowException : public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "Invalid row initialization by unordered assignment\n"; 
+	}
+};
+
 
 
 #endif // HEADER_GUARD_DB_EXCEPTIONS_H
