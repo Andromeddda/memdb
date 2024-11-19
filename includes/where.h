@@ -3,10 +3,10 @@
 
 namespace memdb
 {
-	class WhereStatement
-	{
-
-	};
+    class WhereStatement
+    {
+        
+    };
 } // namespace memdb
 
 #endif // HEADER_GUARD_WHERE_H

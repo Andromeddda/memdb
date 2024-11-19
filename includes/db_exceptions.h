@@ -33,12 +33,19 @@ public:
 	}
 };
 
-
 class InvalidTablePointerException : public std::exception
 {
 public:
 	const char* what() const throw() {
 		return "Invalid table pointer provided\n"; 
+	}
+};
+
+class InvalidExcapeSequenceException : public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "Invalid escape sequence in string\n"; 
 	}
 };
 

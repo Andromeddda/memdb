@@ -1,6 +1,10 @@
 #ifndef HEADER_GUARD_PARSER_H
 #define HEADER_GUARD_PARSER_H
 
+#include <regex>
+#include <string>
+#include <cstddef>
+
 #include "where.h"
 #include "assignment.h"
 #include "command.h"
@@ -47,26 +51,45 @@ namespace memdb
         SQLCommand* parse();
 
     private:
-        typedef std::string::iterator Position;
+        typedef std::string::const_iterator Position;
         std::string query_;
 
+        // general parsing functions
         bool parse_pattern(std::regex regexp);
         bool parse_pattern(std::regex regexp, std::string& ret);
 
+        // punctuation parsing
         bool parse_whitespaces();
         bool parse_comma();
+        bool parse_colon();
+        bool parse_equal_sign();
 
-        bool parse_command_name(CommandType& ret);
+        // parsing lexems
+        bool parse_command(CommandType& ret);
         bool parse_keyword(KeywordType& ret);
-        bool parse_table_name(std::string& ret);
-        bool parse_table_or_subquery(std::string& ret);
+        bool parse_name(std::string& ret);
+        bool parse_subquery(std::string& ret);
 
+        // parsing values
+        bool parse_int(int& ret);
+        bool parse_string(std::string& ret);
+        bool parse_bool(bool& ret);
+        bool parse_bytes(std::vector<std::byte>& ret);
+        bool parse_cell_data(cell_t& ret);
+
+        // parsing column description
+        bool parse_attribute(ColumnAttribute& ret);
+        bool parse_attribute_list(unsigned char& ret);
+        bool parse_column_type(ColumnType& ret);
+        bool parse_column_description(ColumnDescription& ret);
+
+        // parsing rows
         bool parse_row_ordered(row_t& ret);
         bool parse_row_unordered(std::unordered_map<std::string, cell_t>& ret);
+
         bool parse_column_name(std::pair<std::string, std::string>& ret);
-        bool parse_column_description(ColumnDescription& ret);
-        bool parse_where_condition(WhereStatement& ret);
         bool parse_set_assignment(SetAssignment& ret);
+        bool parse_where_condition(WhereStatement& ret);
 
         Position pos_;
         Position end_;

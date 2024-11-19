@@ -8,6 +8,8 @@
 #include <variant>
 #include <unordered_map>
 #include <ostream>
+#include <cstddef>
+
 
 #include <cstdio>
 #include <cstring>
@@ -18,24 +20,27 @@
 #define MAX_COLUMN_NAME 128U
 #define MAX_STRING_DATA 256U
 
-#define COLUMN_ATTRIBUTE_KEY            1U
-#define COLUMN_ATTRIBUTE_UNIQUE         2U
-#define COLUMN_ATTRIBUTE_AUTOINCREMENT  4U
-
 namespace memdb 
 {
-    // Data typed stored in table cell
+    // Data types stored in table cell
     using Int32     = uint32_t;
     using Bool      = bool;
     using String    = std::array<signed char,   MAX_STRING_DATA>;
-    using Bytes     = std::array<unsigned char, MAX_STRING_DATA>;
+    using Bytes     = std::array<std::byte, MAX_STRING_DATA>;
 
-    // Flags for of data stored in one table column
+    // Flags for types of data stored in one table column
     enum ColumnType {
         ColumnTypeInt32,
         ColumnTypeBool,
         ColumnTypeString,
         ColumnTypeBytes
+    };
+
+    enum ColumnAttribute
+    {
+        Unique = 1,
+        Key = 2,
+        Autoincrement = 4
     };
 
     struct ColumnDescription {
@@ -107,7 +112,6 @@ namespace memdb
             std::unordered_map<std::string, cell_t>&& row); /*  Insert new row, represented as a map where
                                                                 keys are column names, values are cell data.
                                                                 Replace existing row if one of unique keys already exist */
-        
         row_t get_row(const std::string& index_column,
             const cell_t& index);   /*  Get row by index
                                         Return empty if index doesn't exist
