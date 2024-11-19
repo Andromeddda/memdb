@@ -19,12 +19,6 @@ namespace memdb
         unsigned char       attributes) 
     : type_(type), name_(name), attributes_(attributes) {}
 
-    //
-    // Hash
-    //
-    size_t Hash::operator() (cell_t& cell) const {
-        return cell.get_hash();
-    }
 
     //
     // Table

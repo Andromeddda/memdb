@@ -32,19 +32,24 @@ namespace memdb {
 		value_ = std::move(a);
 	}
 
-	size_t Cell::get_hash() const
+	ColumnType Cell::get_type() const
 	{
 		if (is_int())
-			return std::hash<int>{}(std::get<Int32>(value_));
+			return ColumnTypeInt32;
 		if (is_bool())
-			return std::hash<bool>{}(std::get<Bool>(value_));
-
-		String str = std::get<String>(value_); // get array of chars
+			return ColumnTypeBool;
 		if (is_string())
-			return std::hash<std::string>{}(std::string(&str[0])); // return hash of null-terminated string
+			return ColumnTypeString;
+		return ColumnTypeBytes;
+	}
 
-		return std::hash<std::string>{}(std::string(&str[0], &str[MAX_STRING_DATA - 1]));	
-			// return hash of string of length MAX_STRING_DATA
+	bool Cell::operator< (const Cell& other) const
+	{
+		if (get_type() != other.get_type())
+			throw TypeException();
+
+		return *this < other;
+
 	}
 
 	bool Cell::is_int() const 

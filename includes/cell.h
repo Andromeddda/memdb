@@ -21,6 +21,14 @@ namespace memdb
     using String    = typename std::array<char, MAX_STRING_DATA>;
     using Bytes     = typename std::array<std::byte, MAX_STRING_DATA>;
 
+    // Flags for types of data stored in one table column
+    enum ColumnType {
+        ColumnTypeInt32,
+        ColumnTypeBool,
+        ColumnTypeString,
+        ColumnTypeBytes
+    };
+
     class Cell
     {
     public:
@@ -41,7 +49,8 @@ namespace memdb
         bool is_string() const;
         bool is_bytes() const;
 
-        size_t get_hash() const;
+        ColumnType get_type() const;
+        bool operator< (const Cell& other) const;
 
         Int32& get_int();
         Bool& get_bool();

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <variant>
 #include <unordered_map>
+#include <map>
 #include <ostream>
 #include <cstddef>
 
@@ -23,14 +24,6 @@
 
 namespace memdb 
 {
-    // Flags for types of data stored in one table column
-    enum ColumnType {
-        ColumnTypeInt32,
-        ColumnTypeBool,
-        ColumnTypeString,
-        ColumnTypeBytes
-    };
-
     enum ColumnAttribute
     {
         Unique = 1,
@@ -56,9 +49,11 @@ namespace memdb
         //typename std::variant<Int32, Bool, String, Bytes>
         cell_t;
 
-    // Hash function for indexing String and Bytes types
-    struct Hash {
-        size_t operator() (cell_t& cell) const;
+    // Lexicographical comparison of two cells
+    struct CellCompare {
+        bool operator() (const cell_t& lhs, const cell_t& rhs) const {
+            return lhs < rhs;
+        }
     };
 
     typedef
@@ -66,7 +61,7 @@ namespace memdb
         row_t;
 
     typedef
-        typename std::unordered_map<cell_t, size_t, Hash>
+        typename std::map<cell_t, size_t>
         index_t;
 
     /* 
