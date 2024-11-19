@@ -89,6 +89,14 @@ public:
 	}
 };
 
+class InvalidColumnNameException : public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "Invalid column name\n"; 
+	}
+};
+
 class InvalidAssignmentRowException : public std::exception
 {
 public:

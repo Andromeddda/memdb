@@ -542,8 +542,32 @@ namespace memdb
 
         return true;
     }
+
+    bool Parser::parse_column_name(std::pair<std::string, std::string>& ret)
+    {
+        static const std::regex 
+            dot{"\\(."};
+
+        std::string name1, name2;
+
+        if(!parse_name(name1))
+            return false;
+
+        if (parse_pattern(dot))
+        {
+            if(!parse_name(name2))
+                throw InvalidColumnNameException();
+            ret.first = name1;
+            ret.second = name2;
+            return true;
+        }
+        ret.first = "";
+        ret.second = name1;
+
+        return true;
+    }
+
     
-    // bool Parser::parse_column_name(std::pair<std::string, std::string>& ret);
     // bool Parser::parse_set_assignment(SetAssignment& ret);
     // bool Parser::parse_where_condition(WhereStatement& ret);
 } // namespace memdb

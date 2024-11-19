@@ -50,7 +50,7 @@ namespace memdb
 
         SQLCommand* parse();
 
-    // private:
+    private:
         typedef std::string::const_iterator Position;
         std::string query_;
 
