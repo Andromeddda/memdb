@@ -16,18 +16,13 @@
 #include <ctype.h>
 #include <cstdint>
 
+#include "cell.h"
+
 #define MAX_TABLE_NAME  128U
 #define MAX_COLUMN_NAME 128U
-#define MAX_STRING_DATA 256U
 
 namespace memdb 
 {
-    // Data types stored in table cell
-    using Int32     = uint32_t;
-    using Bool      = bool;
-    using String    = std::array<signed char,   MAX_STRING_DATA>;
-    using Bytes     = std::array<std::byte, MAX_STRING_DATA>;
-
     // Flags for types of data stored in one table column
     enum ColumnType {
         ColumnTypeInt32,
@@ -57,13 +52,13 @@ namespace memdb
         ~ColumnDescription() = default;
     };
 
-    typedef
-        typename std::variant<Int32, Bool, String, Bytes>
+    typedef Cell
+        //typename std::variant<Int32, Bool, String, Bytes>
         cell_t;
 
     // Hash function for indexing String and Bytes types
     struct Hash {
-        size_t operator() (const cell_t& cell) const;
+        size_t operator() (cell_t& cell) const;
     };
 
     typedef

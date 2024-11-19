@@ -22,14 +22,9 @@ namespace memdb
     //
     // Hash
     //
-    size_t Hash::operator() (const cell_t& cell) const {
-        String arr = std::get<String>(cell); 
-        std::string str = std::string(arr.begin(), arr.end());
-
-        // return hash of cell data represented as string
-        return std::hash<std::string>{}(str);
+    size_t Hash::operator() (cell_t& cell) const {
+        return cell.get_hash();
     }
-
 
     //
     // Table

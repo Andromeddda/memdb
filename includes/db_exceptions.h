@@ -41,13 +41,38 @@ public:
 	}
 };
 
-class InvalidExcapeSequenceException : public std::exception
+class InvalidEscapeSequenceException : public std::exception
 {
 public:
 	const char* what() const throw() {
 		return "Invalid escape sequence in string\n"; 
 	}
 };
+
+class InvalidHexValueException : public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "Invalid hex value\n"; 
+	}
+};
+
+class MaxLengthExceededException : public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "String or bytes data exceeded max length of 256\n"; 
+	}
+};
+
+class TypeException : public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "Unable to convert cell typed to requested type\n"; 
+	}
+};
+
 
 
 #endif // HEADER_GUARD_DB_EXCEPTIONS_H

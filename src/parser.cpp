@@ -37,6 +37,20 @@ namespace memdb
             {"BY",         By}
         };
 
+    unsigned char char_to_hex(char a)
+    {
+        if (!isxdigit(a)) 
+            throw InvalidHexValueException();
+        if (isdigit(a))
+            return a - '0';
+        return tolower(a) - 'a' + 1;
+    }
+
+    unsigned char two_chars_to_hex(char a, char b)
+    {
+        return char_to_hex(a) * 16 + char_to_hex(b);    
+    }
+
     // convert escape sequences to characters
     std::string unescape(const std::string& str)
     {
@@ -248,6 +262,40 @@ namespace memdb
 
         return res;
     }
+
+    bool Parser::parse_bytes(std::vector<std::byte>& ret)
+    {
+        // Parse as a string
+        std::string str;
+                static const std::regex
+            pattern("0x[A-F0-9]+");
+        bool res = parse_pattern(pattern, str);
+
+        if (!res) return false;
+        ret.clear();
+
+        // Make the number of characters even
+        if (str.size() % 2 != 0)
+            str += '0';
+
+        for (auto i = 2LU; i < str.size(); i += 2)
+            ret.push_back(std::byte(
+                two_chars_to_hex(str[i], str[i+1]) ));
+        
+        return true;
+    }
+
+    // bool parse_cell_data(cell_t& ret)
+    // {
+    //     bool res = false;
+
+    //     int int_value;
+    //     bool bool_value;
+    //     std::string& string_value;
+    //     std::vector
+
+    //     return res;
+    // }
 
     // bool Parser::parse_row_ordered(row_t& ret)
     // {
