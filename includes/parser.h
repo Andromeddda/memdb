@@ -5,8 +5,7 @@
 #include <string>
 #include <cstddef>
 
-#include "where.h"
-#include "assignment.h"
+#include "expression.h"
 #include "command.h"
 #include "table.h"
 
@@ -89,8 +88,7 @@ namespace memdb
         bool parse_row_unordered(std::unordered_map<std::string, cell_t>& ret);
 
         bool parse_column_name(std::pair<std::string, std::string>& ret);
-        bool parse_set_assignment(SetAssignment& ret);
-        bool parse_where_condition(WhereStatement& ret);
+        bool parse_expression(Expression& ret);
 
         Position pos_;
         Position end_;

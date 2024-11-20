@@ -5,6 +5,6 @@
 #include "database.h"
 #include "table.h"
 #include "command.h"
-#include "where.h"
+#include "expression.h"
 
 #endif

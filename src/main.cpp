@@ -15,13 +15,11 @@ using namespace memdb;
 
 int main(void)  
 {
-    // Parser p = Parser("{key, unique} id : string");
+    std::variant<std::array<std::byte, 5>, std::array<char, 5>> a(std::array<char, 5>{'a', 'b', 'c', 'd', 'e'});
 
-    // ColumnDescription c;
+    std::array<std::byte, 5> b = std::get<std::array<std::byte, 5>>(a);
 
-    // bool res = p.parse_column_description(c);
-
-    // if (res)
-    //     cout << (int)c.attributes_ << ", " << c.name_ << ", " << (int)c.type_ << '\n';
+    for (int i = 0; i < 5; i++)
+        cout << (char)b[i] << ' ';
     return 0;
 }

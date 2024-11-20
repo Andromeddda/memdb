@@ -2,7 +2,7 @@
 #include "command.h"
 #include "table.h"
 #include "database.h"
-#include "where.h"
+#include "expression.h"
 
 #include <regex>
 #include <string>
@@ -546,7 +546,7 @@ namespace memdb
     bool Parser::parse_column_name(std::pair<std::string, std::string>& ret)
     {
         static const std::regex 
-            dot{"\\(."};
+            dot{"\\."};
 
         std::string name1, name2;
 
@@ -567,26 +567,7 @@ namespace memdb
         return true;
     }
 
-    
+
     // bool Parser::parse_set_assignment(SetAssignment& ret);
     // bool Parser::parse_where_condition(WhereStatement& ret);
 } // namespace memdb
-
-
-
-/* 
-
-Commands:
-
-1. 
-- CREATE TABLE <NAME> [{attributes}] <name>: <type> [= <value>]
-- INSERT (<values>) TO <table>
-- SELECT <columns> FROM <table> [WHERE <condition>]
-- UPDATE <table> SET <assignments> [WHERE <condition>]
-- DELETE <table> WHERE <condition>
-
-2. 
-- <table1> JOIN <table2> ON <condition>
-- CREATE <index type> INDEX ON <table> BY <columns>
-
-*/

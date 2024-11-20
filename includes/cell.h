@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <array>
+#include <unordered_map>
 
 #include <stdint.h>
 #include "db_exceptions.h"
@@ -18,8 +19,15 @@ namespace memdb
     // Data types stored in table cell
     using Int32     = int32_t;
     using Bool      = bool;
-    using String    = typename std::array<char, MAX_STRING_DATA>;
-    using Bytes     = typename std::array<std::byte, MAX_STRING_DATA>;
+
+    #define CACHE_STRINGS
+    #ifdef  CACHE_STRINGS
+        using String    = typename std::array<char, MAX_STRING_DATA>;
+        using Bytes     = typename std::array<std::byte, MAX_STRING_DATA>;
+    #else
+        using String    = typename std::string;
+        using Bytes     = typename std::vector<std::byte>;
+    #endif // CACHE_STRINGS
 
     // Flags for types of data stored in one table column
     enum ColumnType {
@@ -50,17 +58,47 @@ namespace memdb
         bool is_bytes() const;
 
         ColumnType get_type() const;
-        bool operator< (const Cell& other) const;
-
-        Int32& get_int();
-        Bool& get_bool();
-        String& get_string();
-        Bytes& get_bytes();
-
         std::string display() const;
+
+        bool less(const Cell& other) const;
+
+        Int32           get_int() const;
+        Bool            get_bool() const;
+        std::string     get_string() const;
+        std::vector<std::byte>   get_bytes() const;
+
+        // Comparison operators
+        Cell operator== (const Cell& other) const;
+        Cell operator!= (const Cell& other) const;
+        Cell operator>= (const Cell& other) const;
+        Cell operator<= (const Cell& other) const;
+        Cell operator< (const Cell& other) const;
+        Cell operator> (const Cell& other) const;
+
+        // Arithmetical operators (For Int32)
+        Cell operator- () const;
+        Cell operator-(const Cell& other) const;
+        Cell operator/ (const Cell& other) const;
+        Cell operator* (const Cell& other) const; // Int32 and Bool
+        Cell operator+ (const Cell& other) const; // Int32, String and Bool
+
+        // Logical operators (For Bool)
+        Cell operator! () const;
+        Cell operator&& (const Cell& other) const;
+        Cell operator|| (const Cell& other) const;
+
+        // Bitwise operators (For Int32, Bool and Bytes)
+        Cell operator~ ();
+        Cell operator| (const Cell& other) const;
+        Cell operator& (const Cell& other) const;
+        Cell operator^ (const Cell& other) const;
+        
+
     private:
         std::variant<Int32, Bool, String, Bytes>
             value_;
+
+        size_t size_;
     };
 
 } // namespace memdb

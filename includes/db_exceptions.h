@@ -113,6 +113,65 @@ public:
 	}
 };
 
+class IncompatibleTypeOperatorException: public std::exception
+{
+public:
+	IncompatibleTypeOperatorException(
+		std::string op, std::string type) :
+	op_(op), type_(type) {}
+
+	const char* what() const throw() {
+		std::string what_ = "Type " + type_ + " is incompatible with operator " + op_ + '\n';
+		return what_.c_str(); 
+	}
+
+private:
+	std::string op_;
+	std::string type_;
+};
+
+
+class DifferentTypesException: public std::exception
+{
+public:
+	DifferentTypesException(
+		std::string op) : op_(op ) { }
+
+	const char* what() const throw() {
+		std::string what_ = "Operator " + op_ + " do not maintain different types\n";
+		return what_.c_str(); 
+	}
+
+private:
+	std::string op_;
+};
+
+class DifferentSizeException: public std::exception
+{
+public:
+	DifferentSizeException(
+		std::string op) : op_(op ) { }
+
+	const char* what() const throw() {
+		std::string what_ = "Operator " + op_ + " do not maintain different size of operands\n";
+		return what_.c_str(); 
+	}
+
+private:
+	std::string op_;
+};
+
+
+class DivisionByZeroException: public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "Division by zero\n"; 
+	}
+};
+
+
+
 
 
 #endif // HEADER_GUARD_DB_EXCEPTIONS_H

@@ -109,7 +109,7 @@ namespace memdb {
             argument_;  // A table to select from, represented as a command.
                         // If the table is provided straightforward by name, GetTable class is used
 
-        WhereStatement
+        Expression
             where_;     // Expression tree of conditions provided with WHERE 
     };
 
@@ -124,7 +124,7 @@ namespace memdb {
         std::vector<std::pair<std::string, std::string>>
             column_names_;  // Pairs of table-column names
 
-        WhereStatement
+        Expression
             where_;     // Expression tree of conditions provided with WHERE 
     };
 

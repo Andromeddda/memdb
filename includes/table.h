@@ -58,7 +58,7 @@ namespace memdb
     // Lexicographical comparison of two cells
     struct CellCompare {
         bool operator() (const cell_t& lhs, const cell_t& rhs) const {
-            return lhs < rhs;
+            return lhs.less(rhs);
         }
     };
 
