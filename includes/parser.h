@@ -89,6 +89,15 @@ namespace memdb
         bool parse_column_name(std::pair<std::string, std::string>& ret);
         bool parse_expression(Expression& ret);
 
+        using VecPosition = typename std::vector<std::string>::const_iterator;
+
+        static bool parse_pattern_static(std::regex regexp, Position& pos_, Position& end_);
+        static bool parse_pattern_static(std::regex regexp, Position& pos_, Position& end_, std::string& ret);
+        static std::vector<std::string> tokenize_expression(const std::string& str);
+        static std::unique_ptr<Expression> parse_expression(const std::vector<std::string>& tokens);
+        static std::unique_ptr<Expression> parse_expression_r(const std::vector<std::string>& tokens, 
+            VecPosition pos, VecPosition end);
+
         Position pos_;
         Position end_;
 

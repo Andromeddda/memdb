@@ -44,6 +44,50 @@ namespace memdb
             {"autoincrement", Autoincrement}
         };
 
+    static const std::unordered_map<std::string, Operation> 
+        str_to_op = {
+            { "+" , ADD },
+            { "-" , SUB },
+            { "*" , MUL },
+            { "/" , DIV },
+            { "%" , MOD },
+            { "||", OR  },
+            { "&&", AND },
+            { "!" , NOT },
+            { "^" , XOR },
+            {  "&", BAND},
+            { "|" , BOR },
+            {  "~", BNEG},
+            { "==", EQ  },
+            { "!=", NEQ },
+            { "<" , LE  },
+            { "<=", LEQ },
+             { ">" , GR  },
+            { ">=", GEQ } 
+        };
+
+    static const std::unordered_map<std::string, size_t>
+        str_to_prior = {
+            { "||", 0 },
+            { "&&", 1 },
+            { "|" , 2 },
+            { "^" , 3 },
+            { "&" , 4 },
+            { "==", 5 },
+            { "!=", 5 },
+            { "<" , 6 },
+            { "<=", 6 },
+             { ">" , 6 },
+            { ">=", 6 },
+            { "+" , 7 },
+            { "-" , 7 },
+            { "*" , 8 },
+            { "/" , 8 },
+            { "%" , 8 },
+            { "!" , 9 },
+            {  "~", 9 }
+        };
+
     unsigned char char_to_hex(char a)
     {
         if (!isxdigit(a)) 
@@ -173,10 +217,46 @@ namespace memdb
         return match_status;
     }
 
+    bool Parser::parse_pattern_static(std::regex regexp, Position& pos_, Position& end_) 
+    {
+        std::smatch match_result{}; // Match regex in std::string
+
+        bool match_status = std::regex_search(
+            pos_, end_,                              // The iterators limiting the matched sequence
+            match_result,                            // Match result
+            regexp,                                  // Regular expression specifying the pattern
+            std::regex_constants::match_continuous); // Start matching from the beginning (pos_)
+
+        // Move the iterator on success:
+        if (match_status)
+            pos_ = match_result[0].second;
+
+
+        return match_status;
+    }
+
+    bool Parser::parse_pattern_static(std::regex regexp, Position& pos_, Position& end_, std::string& ret) 
+    {
+        std::smatch match_result{}; // Match regex in std::string
+
+        bool match_status = std::regex_search(
+            pos_, end_,                              // The iterators limiting the matched sequence
+            match_result,                            // Match result
+            regexp,                                  // Regular expression specifying the pattern
+            std::regex_constants::match_continuous); // Start matching from the beginning (pos_)
+
+        // Move the iterator on success:
+        if (match_status) {
+            pos_ = match_result[0].second;
+            ret = std::string(match_result[0].first, match_result[0].second);
+        }
+
+        return match_status;
+    }
 
     bool Parser::parse_whitespaces()
     {
-        static const std::regex pattern{"\\s+"};
+        static const std::regex pattern{"\\s*"};
         return parse_pattern(pattern);
     }
 
@@ -566,6 +646,104 @@ namespace memdb
         ret.second = name1;
 
         return true;
+    }
+
+    std::vector<std::string> Parser::tokenize_expression(const std::string& str)
+    {
+        static const std::regex 
+            token_pattern(
+        "([A-Za-z0-9_\\.]+)|(\\+)|(\\-)|(\\/)|(\\*)|(%)|(==)|(!=)|(>=)|(>)|(<=)|(<)|(\\&\\&)|(\\|\\|)(\\^)|(~)|(\\&)|(\\|)|(!)|(\\()|(\\))"
+        );
+
+        static const std::regex 
+            space_pattern("[\\s*]");
+
+        std::string::const_iterator 
+            pos_ = str.begin(), 
+            end_ = str.end();
+
+        std::vector<std::string> res{};
+        std::string token;
+
+        while (parse_pattern_static(token_pattern, pos_, end_, token)) {
+            res.push_back(token);
+            parse_pattern_static(space_pattern, pos_, end_);
+        }
+        return res;
+    }
+
+    std::unique_ptr<Expression> Parser::parse_expression(const std::vector<std::string>& tokens)
+    {
+        return parse_expression_r(tokens, tokens.begin(), tokens.end());
+    }
+
+    std::unique_ptr<Expression> Parser::parse_expression_r(const std::vector<std::string>& tokens, 
+        VecPosition pos, VecPosition end)
+    {
+        size_t parenthesis = 0;
+        size_t min_prior = (size_t)(-1);
+
+        // skip leading parenthesis so that all unary operators will be at the begin
+        VecPosition begin = pos;
+        while (*begin == "(") {
+            begin++;
+            parenthesis++;
+        }
+
+        VecPosition It = begin;
+        VecPosition root = end;
+
+        while (It != end)
+        {
+            if (*It == "(") {
+                It++;
+                parenthesis += 10;
+                continue;
+            }
+
+            if (*It == ")") {
+                It++;
+                parenthesis -= 10;
+                continue;
+            }
+
+            // skip names
+            if (str_to_op.find(*It) == str_to_op.end()) 
+            {
+                It++;
+                continue;
+            }
+
+            size_t prior = parenthesis + str_to_prior.at(*It);
+            if (prior < min_prior) {
+                min_prior = prior;
+                root = It;
+            }
+            It++;
+        }
+
+        // Value Iterator
+        if (root == end) 
+            return std::unique_ptr<Expression>(
+                    new ValueExpression(*begin));
+
+        // Unary iterator
+        if (root == begin) 
+        {
+            if (*root == "-")
+                return std::unique_ptr<Expression>(
+                    new UnaryExpression(parse_expression_r(tokens, root + 1, end), NEG));
+
+            return std::unique_ptr<Expression>(
+                    new UnaryExpression(parse_expression_r(tokens, root + 1, end), str_to_op.at(*root)));
+        }
+
+        // Binary iterator
+        return std::unique_ptr<Expression>(
+                    new BinaryExpression(
+                        parse_expression_r(tokens, begin, root), 
+                        parse_expression_r(tokens, root + 1, end), 
+                        str_to_op.at(*root)));
     }
 
 

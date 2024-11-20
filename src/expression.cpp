@@ -25,26 +25,6 @@ namespace memdb
         	{ GEQ, ">=" } 
 		};
 	
-	  // UnaryExpression  Expression::operator- () const { return UnaryExpression(*this, NEG); }
-      // UnaryExpression  Expression::operator! () const { return UnaryExpression(*this, NOT); }
-      // UnaryExpression  Expression::operator~ () const { return UnaryExpression(*this, BNEG);}
-      // BinaryExpression Expression::operator== (const Expression& other) const { return BinaryExpression(*this, other, EQ);  }
-      // BinaryExpression Expression::operator!= (const Expression& other) const { return BinaryExpression(*this, other, NEQ); }
-      // BinaryExpression Expression::operator>= (const Expression& other) const { return BinaryExpression(*this, other, LEQ); }
-      // BinaryExpression Expression::operator<= (const Expression& other) const { return BinaryExpression(*this, other, GEQ); }
-      // BinaryExpression Expression::operator<  (const Expression& other) const { return BinaryExpression(*this, other, LE);  }
-      // BinaryExpression Expression::operator>  (const Expression& other) const { return BinaryExpression(*this, other, GR);  }
-      // BinaryExpression Expression::operator-  (const Expression& other) const { return BinaryExpression(*this, other, SUB); }
-      // BinaryExpression Expression::operator/  (const Expression& other) const { return BinaryExpression(*this, other, DIV); }
-      // BinaryExpression Expression::operator%  (const Expression& other) const { return BinaryExpression(*this, other, MOD); }
-      // BinaryExpression Expression::operator*  (const Expression& other) const { return BinaryExpression(*this, other, MUL); }
-      // BinaryExpression Expression::operator+  (const Expression& other) const { return BinaryExpression(*this, other, ADD); }
-      // BinaryExpression Expression::operator&& (const Expression& other) const { return BinaryExpression(*this, other, AND); }
-      // BinaryExpression Expression::operator|| (const Expression& other) const { return BinaryExpression(*this, other, OR);  }
-      // BinaryExpression Expression::operator|  (const Expression& other) const { return BinaryExpression(*this, other, BAND);}
-      // BinaryExpression Expression::operator&  (const Expression& other) const { return BinaryExpression(*this, other, BOR); }
-      // BinaryExpression Expression::operator^  (const Expression& other) const { return BinaryExpression(*this, other, XOR); }
-
 	ValueExpression::ValueExpression(const std::string& column_name) :
 		column_name_(column_name)
 	{ }
@@ -62,7 +42,6 @@ namespace memdb
 	{
 		return row[table->column_index(column_name_)];
 	}
-
 
 	Cell UnaryExpression::evaluate(Table* table, const row_t& row)
 	{

@@ -25,26 +25,6 @@ namespace memdb
         Expression() = default;
         virtual ~Expression() = default;
         virtual Cell evaluate(Table* table, const row_t& row) = 0;
-
-        // Expression operator- () const;
-        // Expression operator! () const;
-        // Expression operator~ ();
-        // Expression operator== (const Expression& other) const;
-        // Expression operator!= (const Expression& other) const;
-        // Expression operator>= (const Expression& other) const;
-        // Expression operator<= (const Expression& other) const;
-        // Expression operator<  (const Expression& other) const;
-        // Expression operator>  (const Expression& other) const;
-        // Expression operator-  (const Expression& other) const;
-        // Expression operator/  (const Expression& other) const;
-        // Expression operator%  (const Expression& other) const;
-        // Expression operator*  (const Expression& other) const;
-        // Expression operator+  (const Expression& other) const;
-        // Expression operator&& (const Expression& other) const;
-        // Expression operator|| (const Expression& other) const;
-        // Expression operator|  (const Expression& other) const;
-        // Expression operator&  (const Expression& other) const;
-        // Expression operator^  (const Expression& other) const;
     };
 
     // Leave of expression tree
