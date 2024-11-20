@@ -50,6 +50,8 @@ namespace memdb
         ColumnDescription& operator=(const ColumnDescription& other) = default;
         ColumnDescription& operator=(ColumnDescription&& other) = default;
 
+        bool operator== (const ColumnDescription& other) const;
+
         ~ColumnDescription() = default;
     };
 
@@ -62,6 +64,13 @@ namespace memdb
         }
     };
 
+    // Lexicographical comparison of two cells
+    struct ColumnHash {
+        size_t operator() (const ColumnDescription& lhs) const {
+            return std::hash<std::string>{}(lhs.name_);
+        }
+    };
+
     typedef
         typename std::vector<cell_t>
         row_t;
@@ -69,6 +78,10 @@ namespace memdb
     typedef
         typename std::map<cell_t, size_t>
         index_t;
+
+    typedef
+        typename std::unordered_map<ColumnDescription, size_t, ColumnHash>
+        columns_t;
 
     /* 
         Table of a relational database with fixed name and set of columns
@@ -80,11 +93,9 @@ namespace memdb
         // name and columns are required
         Table() = delete;
 
-        Table(std::string&& table_name,
-            std::vector<ColumnDescription>&& columns);
+        Table(std::string&& table_name, columns_t&& columns);
 
-        Table(const char* name,
-            std::vector<ColumnDescription>&& columns);
+        Table(const char* name, columns_t&&  columns);
 
         Table(Table&& other) = default;
         Table(const Table& other) = default;
@@ -99,8 +110,10 @@ namespace memdb
         void display(std::ostream& os);
 
         //
-        // Modification methods
+        // Access methods
         //
+        size_t column_index(const std::string& column_name);
+
         void insert_row(row_t&& row);   /*  Insert new row
                                             Replace existing row if one of unique keys already exist */
 
@@ -122,8 +135,8 @@ namespace memdb
         const std::string
             name_;          // Table name
 
-        const std::vector<ColumnDescription>
-            columns_;       // List of column descriptions (type, name and attributes)
+        const columns_t
+            columns_;
 
         std::vector<row_t> 
             rows_;          // List of rows

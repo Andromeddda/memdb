@@ -417,7 +417,6 @@ namespace memdb
         std::string name;
         ColumnType type;
 
-
         parsed_attr = parse_attribute_list(attr);
         parse_whitespaces();
         parsed_name = parse_name(name);
@@ -440,7 +439,7 @@ namespace memdb
         return parsed_attr && parsed_name && parsed_type;
     }
 
-    bool Parser::parse_column_description_list(std::vector<ColumnDescription>& ret) 
+    bool Parser::parse_column_description_list(columns_t& ret) 
     {
         static const std::regex 
             open_par{"\\("};
@@ -452,6 +451,8 @@ namespace memdb
             return false;
         }
 
+        size_t index = 0;
+
         parse_whitespaces();
         
         bool end_of_list = false;
@@ -461,7 +462,7 @@ namespace memdb
             if (!parse_column_description(description))
                 throw InvalidColumnDescriptionException();
 
-            ret.push_back(description);
+            ret[description] = index++;
             end_of_list = !parse_comma();
         }
 

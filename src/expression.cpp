@@ -3,8 +3,9 @@
 namespace memdb
 {
 
-	ValueExpression::ValueExpression(const std::string& column_name) :
-		column_name_(column_name)
+	ValueExpression::ValueExpression(const std::string& table_name, 
+            const std::string& column_name) :
+		table_name_(table_name), column_name_(column_name)
 	{ }
 
 	UnaryExpression::UnaryExpression(std::unique_ptr<Expression> lhs, Operation op) :

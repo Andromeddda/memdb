@@ -28,11 +28,13 @@ namespace memdb
     class ValueExpression : public Expression
     {
     public:
-        ValueExpression(const std::string& column_name);
+        ValueExpression(const std::string& table_name, 
+            const std::string& column_name);
         ~ValueExpression() override = default;
 
         Cell evaluate(Database* database) override;
     private:
+        std::string table_name_;
         std::string column_name_;
     };
 

@@ -23,6 +23,10 @@ namespace memdb
         unsigned char       attributes) 
     : type_(type), name_(name), attributes_(attributes) {}
 
+    bool ColumnDescription::operator== (const ColumnDescription& other) const {
+        return name_ == other.name_;
+    }
+
 
     //
     // Table
@@ -30,12 +34,12 @@ namespace memdb
 
     Table::Table(
         std::string&& name,
-        std::vector<ColumnDescription>&& columns) :
+        columns_t&&  columns) :
     name_(name), columns_(columns), rows_(), index_()  {}
 
     Table::Table(
         const char* name,
-        std::vector<ColumnDescription>&& columns) :
+        columns_t&&  columns) :
     name_(name), columns_(columns), rows_(), index_() {}
 
     std::string Table::name() { return name_; }
