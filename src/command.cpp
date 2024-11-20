@@ -1,23 +1,6 @@
 #include "command.h"
 #include <utility>
 
-/* 
-
-Commands:
-
-1. 
-- CREATE TABLE <NAME> [{attributes}] <name>: <type> [= <value>]
-- INSERT (<values>) TO <table>
-- SELECT <columns> FROM <table> [WHERE <condition>]
-- UPDATE <table> SET <assignments> [WHERE <condition>]
-- DELETE <table> WHERE <condition>
-
-2. 
-- <table1> JOIN <table2> ON <condition>
-- CREATE <index type> INDEX ON <table> BY <columns>
-
-*/
-
 namespace memdb {
     class GetTable : public SQLCommand
     {
@@ -109,7 +92,7 @@ namespace memdb {
             argument_;  // A table to select from, represented as a command.
                         // If the table is provided straightforward by name, GetTable class is used
 
-        Expression
+        std::unique_ptr<Expression>
             where_;     // Expression tree of conditions provided with WHERE 
     };
 
@@ -124,7 +107,7 @@ namespace memdb {
         std::vector<std::pair<std::string, std::string>>
             column_names_;  // Pairs of table-column names
 
-        Expression
+        std::unique_ptr<Expression>
             where_;     // Expression tree of conditions provided with WHERE 
     };
 

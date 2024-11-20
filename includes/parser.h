@@ -7,7 +7,6 @@
 
 #include "expression.h"
 #include "command.h"
-#include "table.h"
 
 namespace memdb 
 {

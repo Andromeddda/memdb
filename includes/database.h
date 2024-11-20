@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <memory>
 
-
 #include "table.h"
 #include "db_exceptions.h"
 
