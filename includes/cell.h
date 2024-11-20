@@ -79,6 +79,7 @@ namespace memdb
         Cell operator- () const;
         Cell operator-(const Cell& other) const;
         Cell operator/ (const Cell& other) const;
+        Cell operator% (const Cell& other) const;
         Cell operator* (const Cell& other) const; // Int32 and Bool
         Cell operator+ (const Cell& other) const; // Int32, String and Bool
 

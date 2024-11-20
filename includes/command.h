@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "table.h"
+#include "database.h"
 #include "expression.h"
 
 /* 

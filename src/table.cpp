@@ -10,6 +10,14 @@ namespace memdb
     : type_(ColumnTypeInt32), name_(), attributes_(0)
     {}
 
+    ColumnDescription::ColumnDescription(const char *name)
+    : type_(ColumnTypeInt32), name_(name), attributes_(0)
+    {}
+
+    ColumnDescription::ColumnDescription(const std::string& name)
+    : type_(ColumnTypeInt32), name_(name), attributes_(0)
+    {}
+
     ColumnDescription::ColumnDescription(
         ColumnType            type, 
         const std::string&    name, 
@@ -26,7 +34,6 @@ namespace memdb
     bool ColumnDescription::operator== (const ColumnDescription& other) const {
         return name_ == other.name_;
     }
-
 
     //
     // Table
@@ -51,8 +58,16 @@ namespace memdb
     }
 
     //
-    // Modification methods
+    // Access methods
     //
+
+    size_t Table::column_index(const std::string& column_name)
+    {
+        ColumnDescription identical(column_name);
+        if (columns_.find(identical) == columns_.end())
+            throw UnexistingColumnException(column_name);
+        return columns_.at(identical);
+    }
 
     void Table::insert_row(row_t&& row) 
     {

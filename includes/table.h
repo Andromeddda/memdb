@@ -38,6 +38,8 @@ namespace memdb
         unsigned char   attributes_;
 
         ColumnDescription();
+        ColumnDescription(const char *name);
+        ColumnDescription(const std::string& name);
         ColumnDescription(ColumnType type, const char* name, 
             unsigned char attributes);
 
@@ -136,7 +138,7 @@ namespace memdb
             name_;          // Table name
 
         const columns_t
-            columns_;
+            columns_;       // map of columns
 
         std::vector<row_t> 
             rows_;          // List of rows

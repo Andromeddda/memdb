@@ -170,6 +170,36 @@ public:
 	}
 };
 
+class UnexistingColumnException: public std::exception
+{
+public:
+	UnexistingColumnException(
+		std::string name) : name_(name) { }
+
+	const char* what() const throw() {
+		std::string what_ = "Requested column " + name_ + " does not exist\n";
+		return what_.c_str(); 
+	}
+private:
+	std::string name_;
+};
+
+class InvaludNumberOfOperandsException: public std::exception
+{
+public:
+	InvaludNumberOfOperandsException(
+		std::string op) : op_(op ) { }
+
+	const char* what() const throw() {
+		std::string what_ = "Invalud number of operands provided to operator " + op_ + "\n";
+		return what_.c_str(); 
+	}
+
+private:
+	std::string op_;
+};
+
+
 
 
 

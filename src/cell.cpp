@@ -186,6 +186,22 @@ namespace memdb {
         return Cell(get_int() / other.get_int());
     }
 
+    Cell Cell::operator% (const Cell& other) const
+    {
+        ColumnType type1 = get_type();
+        ColumnType type2 = other.get_type();
+
+        if (type1 != ColumnTypeInt32)
+            throw IncompatibleTypeOperatorException("%", type_to_str.at(type1));
+        if (type2 != ColumnTypeInt32)
+            throw IncompatibleTypeOperatorException("%", type_to_str.at(type2));
+
+        if (!other.get_int())
+            throw DivisionByZeroException();
+
+        return Cell(get_int() % other.get_int());
+    }
+
 
     Cell Cell::operator* (const Cell& other) const
     {
