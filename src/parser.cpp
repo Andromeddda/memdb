@@ -88,6 +88,11 @@ namespace memdb
             {  "~", 9 }
         };
 
+    bool token_is_operation(const std::string& token)
+    {
+        return (str_to_op.find(token) != str_to_op.end());
+    }
+
     unsigned char char_to_hex(char a)
     {
         if (!isxdigit(a)) 
@@ -648,6 +653,25 @@ namespace memdb
         return true;
     }
 
+
+    bool Parser::parse_expression(std::unique_ptr<Expression>& ret)
+    {
+        static const std::regex 
+            pattern(".+");
+
+        std::string str;
+
+        if (!parse_pattern(pattern, str))
+            return false;
+
+        std::vector<std::string> tokens = tokenize_expression(str);
+
+        ret = std::move(parse_expression(tokens));
+
+        return true;
+    }
+
+    // Split expression into tokens, assuming the expression is correct
     std::vector<std::string> Parser::tokenize_expression(const std::string& str)
     {
         static const std::regex 
@@ -663,12 +687,31 @@ namespace memdb
             end_ = str.end();
 
         std::vector<std::string> res{};
-        std::string token;
+        std::string token, prev;
+
+        int parenthesis = 0;
 
         while (parse_pattern_static(token_pattern, pos_, end_, token)) {
+            if (token.empty())
+                throw IncorrectNameException();
+
             res.push_back(token);
+
+            if (token == "(") parenthesis++;
+            if (token == ")") 
+            {
+                parenthesis --;
+                if (prev == "(")
+                    throw EmptyExpressionException();
+                if (parenthesis < 0)
+                    throw IncorrectParenthesisException();
+            }
             parse_pattern_static(space_pattern, pos_, end_);
+            prev = std::move(token);
         }
+
+        if (parenthesis > 0)
+            throw IncorrectParenthesisException();
         return res;
     }
 
@@ -687,7 +730,7 @@ namespace memdb
         VecPosition begin = pos;
         while (*begin == "(") {
             begin++;
-            parenthesis++;
+            parenthesis += 10;
         }
 
         VecPosition It = begin;
@@ -708,7 +751,7 @@ namespace memdb
             }
 
             // skip names
-            if (str_to_op.find(*It) == str_to_op.end()) 
+            if (!token_is_operation(*It)) 
             {
                 It++;
                 continue;
@@ -722,11 +765,6 @@ namespace memdb
             It++;
         }
 
-        // Value Iterator
-        if (root == end) 
-            return std::unique_ptr<Expression>(
-                    new ValueExpression(*begin));
-
         // Unary iterator
         if (root == begin) 
         {
@@ -738,6 +776,17 @@ namespace memdb
                     new UnaryExpression(parse_expression_r(tokens, root + 1, end), str_to_op.at(*root)));
         }
 
+        // Value Iterator
+        if (root == end) 
+        {
+            if (token_is_operation(*begin))
+                throw IncorrectNameException();
+
+            return std::unique_ptr<Expression>(
+                    new ValueExpression(*begin));
+        }
+
+
         // Binary iterator
         return std::unique_ptr<Expression>(
                     new BinaryExpression(
@@ -746,7 +795,4 @@ namespace memdb
                         str_to_op.at(*root)));
     }
 
-
-    // bool Parser::parse_set_assignment(SetAssignment& ret);
-    // bool Parser::parse_where_condition(WhereStatement& ret);
 } // namespace memdb

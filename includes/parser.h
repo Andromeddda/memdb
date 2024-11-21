@@ -48,7 +48,7 @@ namespace memdb
 
         SQLCommand* parse();
 
-    private:
+    // private:
         typedef std::string::const_iterator Position;
         std::string query_;
 
@@ -87,7 +87,7 @@ namespace memdb
         bool parse_row_unordered(std::unordered_map<std::string, cell_t>& ret);
 
         bool parse_column_name(std::pair<std::string, std::string>& ret);
-        bool parse_expression(Expression& ret);
+        bool parse_expression(std::unique_ptr<Expression>& ret);
 
         using VecPosition = typename std::vector<std::string>::const_iterator;
 

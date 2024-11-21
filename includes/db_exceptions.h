@@ -200,8 +200,29 @@ private:
 };
 
 
+class IncorrectParenthesisException: public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "Incorrect sequence of parenthesis\n"; 
+	}
+};
 
+class EmptyExpressionException: public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "Empty expression or empty parenthesis\n"; 
+	}
+};
 
+class IncorrectNameException: public std::exception
+{
+public:
+	const char* what() const throw() {
+		return "Incorrect variable name provided to exception. Name cannot be empty, an operator token, or contain space symbols\n"; 
+	}
+};
 
 
 #endif // HEADER_GUARD_DB_EXCEPTIONS_H
