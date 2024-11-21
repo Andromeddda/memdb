@@ -1,12 +1,12 @@
-#ifndef HEADER_GUARD_EXPRESSION_H
-#define HEADER_GUARD_EXPRESSION_H
+#ifndef HEADER_GUARD_EXPRESSION_EXPRESSION_H
+#define HEADER_GUARD_EXPRESSION_EXPRESSION_H
 
 #include <string>
 #include <memory>
 #include <unordered_map>
 
-#include "cell.h"
-#include "table.h"
+#include "cell/cell.hpp"
+#include "database/table.hpp"
 
 namespace memdb
 {
@@ -24,7 +24,7 @@ namespace memdb
     public:
         Expression() = default;
         virtual ~Expression() = default;
-        virtual Cell evaluate(Table* table, const row_t& row) = 0;
+        virtual Cell evaluate(const Row& row) = 0;
     };
 
     // Leave of expression tree
@@ -34,7 +34,7 @@ namespace memdb
         ValueExpression(const std::string& column_name);
         ~ValueExpression() override = default;
 
-        Cell evaluate(Table* table, const row_t& row) override;
+        Cell evaluate(const Row& row) override;
     private:
         std::string column_name_;
     };
@@ -46,7 +46,7 @@ namespace memdb
         UnaryExpression(std::unique_ptr<Expression> lhs, Operation op);
         ~UnaryExpression() override = default;
 
-        Cell evaluate(Table* table, const row_t& row) override;
+        Cell evaluate(const Row& row) override;
     private:
         std::unique_ptr<Expression> lhs_;
         Operation op_;
@@ -60,7 +60,7 @@ namespace memdb
             std::unique_ptr<Expression> rhs, Operation op);
         ~BinaryExpression() override = default;
 
-        Cell evaluate(Table* table, const row_t& row) override;
+        Cell evaluate(const Row& row) override;
     private:
         std::unique_ptr<Expression> lhs_;
         std::unique_ptr<Expression> rhs_;
@@ -69,4 +69,4 @@ namespace memdb
 
 } // namespace memdb
 
-#endif // HEADER_GUARD_EXPRESSION_H
+#endif // HEADER_GUARD_EXPRESSION_EXPRESSION_H

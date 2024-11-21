@@ -1,14 +1,16 @@
-#ifndef HEADER_GUARD_PARSER_H
-#define HEADER_GUARD_PARSER_H
+#ifndef HEADER_GUARD_PARSER_PARSER_H
+#define HEADER_GUARD_PARSER_PARSER_H
 
 #include <regex>
 #include <string>
 #include <cstddef>
 
-#include "expression.h"
-#include "command.h"
+#include "expression/expression.hpp"
+#include "command/command.hpp"
+#include "cell/cell.hpp"
+#include "parser/parse_exception.hpp"
 
-namespace memdb 
+namespace memdb
 {
     enum CommandType
     {
@@ -32,7 +34,7 @@ namespace memdb
         By
     };
 
-	class Parser
+    class Parser
     {
     public:
         Parser(std::string&& query);
@@ -48,7 +50,7 @@ namespace memdb
 
         SQLCommand* parse();
 
-    // private:
+    private:
         typedef std::string::const_iterator Position;
         std::string query_;
 
@@ -73,20 +75,20 @@ namespace memdb
         bool parse_string(std::string& ret);
         bool parse_bool(bool& ret);
         bool parse_bytes(std::vector<std::byte>& ret);
-        bool parse_cell_data(cell_t& ret);
+        bool parse_cell_data(Cell& ret);
 
         // parsing column description
         bool parse_attribute(ColumnAttribute& ret);
         bool parse_attribute_list(unsigned char& ret);
-        bool parse_column_type(ColumnType& ret);
-        bool parse_column_description(ColumnDescription &ret);
-        bool parse_column_description_list(columns_t& ret);
+        bool parse_column_type(CellType& ret);
+        bool parse_column_description(Column &ret);
+        bool parse_column_description_list(ColumnMap& ret);
 
         // parsing rows
-        bool parse_row_ordered(row_t& ret);
-        bool parse_row_unordered(std::unordered_map<std::string, cell_t>& ret);
+        bool parse_row_ordered(std::vector<Cell>& ret);
+        bool parse_row_unordered(std::unordered_map<std::string, Cell>& ret);
 
-        bool parse_column_name(std::pair<std::string, std::string>& ret);
+        bool parse_column_name(std::string& ret);
         bool parse_expression(std::unique_ptr<Expression>& ret);
 
         using VecPosition = typename std::vector<std::string>::const_iterator;
@@ -100,35 +102,7 @@ namespace memdb
 
         Position pos_;
         Position end_;
-
     };
 } // namespace memdb
 
-
-/* 
-
-Commands:
-
-1.
-+ CREATE TABLE <NAME> [{attributes}] <name>: <type> [= <value>]
-        create table users ({key, autoincrement} id :
-        int32, {unique} login: string[32], password_hash: bytes[8], is_admin:
-        bool = false)
-
-+ INSERT (<values>) TO <table>
-        insert (,"vasya", 0xdeadbeefdeadbeef) to users
-        insert (login = "vasya", password_hash = 0xdeadbeefdeadbeef)
-
-- SELECT <columns> FROM <table> [WHERE <condition>]
-        select id, login from users where is_admin || id < 10
-
-- UPDATE <table> SET <assignments> [WHERE <condition>]
-- DELETE <table> WHERE <condition>
-
-2. 
-- <table1> JOIN <table2> ON <condition>
-- CREATE <index type> INDEX ON <table> BY <columns>
-
-*/
-
-#endif // HEADER_GUARD_PARSER_H
+#endif

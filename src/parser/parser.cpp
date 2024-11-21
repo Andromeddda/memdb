@@ -1,20 +1,15 @@
-#include "parser.h"
-#include "command.h"
-#include "table.h"
-#include "database.h"
-#include "expression.h"
-
-#include <regex>
-#include <string>
-#include <cstring>
-#include <iostream>
-#include <unordered_map>
+#include "parser/parser.hpp"
 
 #include <ctype.h>
 #include <assert.h>
 
 namespace memdb 
 {
+
+    // SQLCommand* Parser::parse() {
+
+    // }
+
     static const std::unordered_map<std::string, CommandType>
         str_to_command_mp {
             {"CREATE TABLE", CreateTable},
@@ -405,7 +400,7 @@ namespace memdb
         return true;
     }
 
-    bool Parser::parse_cell_data(cell_t& ret)
+    bool Parser::parse_cell_data(Cell& ret)
     {
         int int_val;
         bool bool_val;
@@ -414,16 +409,16 @@ namespace memdb
 
         bool res = false;
         if ((res = parse_int(int_val)))
-            ret =  cell_t(int_val);
+            ret =  Cell(int_val);
 
         if ((res = parse_bool(bool_val)))
-            ret = cell_t(bool_val);
+            ret = Cell(bool_val);
 
         if ((res = parse_string(str_val)))
-            ret = cell_t(str_val);
+            ret = Cell(str_val);
 
         if ((res = parse_bytes(bytes_val)))
-            ret = cell_t(bytes_val);
+            ret = Cell(bytes_val);
         return res;
     }
 
@@ -473,7 +468,7 @@ namespace memdb
         return true;
     }
 
-    bool Parser::parse_column_type(ColumnType& ret)
+    bool Parser::parse_column_type(CellType& ret)
     {
         static const std::regex 
             pattern{"(int32)|(bool)|(string(\\[[1-9][0-9]*\\])?)|(bytes(\\[[1-9][0-9]*\\])?)"};
@@ -485,22 +480,22 @@ namespace memdb
 
         switch (str[1])
         {
-        case 'n': ret = ColumnTypeInt32; break;
-        case 'o': ret = ColumnTypeBool; break;
-        case 't': ret = ColumnTypeString; break;
-        case 'y': ret = ColumnTypeBytes; break;
+        case 'n': ret = CellType::INT32; break;
+        case 'o': ret = CellType::BOOL; break;
+        case 't': ret = CellType::STRING; break;
+        case 'y': ret = CellType::BYTES; break;
         }
 
         return true;
     }
 
-    bool Parser::parse_column_description(ColumnDescription& ret)
+    bool Parser::parse_column_description(Column& ret)
     {
         bool parsed_attr = false, parsed_name = false, parsed_type = false;
 
         unsigned char attr = 0;
         std::string name;
-        ColumnType type;
+        CellType type;
 
         parsed_attr = parse_attribute_list(attr);
         parse_whitespaces();
@@ -519,12 +514,12 @@ namespace memdb
         if (parsed_name && !parsed_type)
             throw InvalidColumnDescriptionException();
 
-        ret = ColumnDescription(type, name, attr);
+        ret = Column(type, name, attr);
 
         return parsed_attr && parsed_name && parsed_type;
     }
 
-    bool Parser::parse_column_description_list(columns_t& ret) 
+    bool Parser::parse_column_description_list(ColumnMap& ret) 
     {
         static const std::regex 
             open_par{"\\("};
@@ -541,7 +536,7 @@ namespace memdb
         parse_whitespaces();
         
         bool end_of_list = false;
-        ColumnDescription description;
+        Column description;
 
         while (!end_of_list) {
             if (!parse_column_description(description))
@@ -558,7 +553,7 @@ namespace memdb
         return true;
     }
 
-    bool Parser::parse_row_ordered(row_t& ret)
+    bool Parser::parse_row_ordered(std::vector<Cell>& ret)
     {
         static const std::regex 
             open_par{"\\("};
@@ -575,7 +570,7 @@ namespace memdb
         bool end_of_list = false;
 
         while (!end_of_list) {
-            cell_t cell = cell_t();
+            Cell cell = Cell();
             parse_cell_data(cell);
 
             ret.push_back(cell);
@@ -589,7 +584,7 @@ namespace memdb
         return true;
     }
 
-    bool Parser::parse_row_unordered(std::unordered_map<std::string, cell_t>& ret)
+    bool Parser::parse_row_unordered(std::unordered_map<std::string, Cell>& ret)
     {
         static const std::regex 
             open_par{"\\("};
@@ -606,7 +601,7 @@ namespace memdb
         bool end_of_list = false;
 
         while (!end_of_list) {
-            cell_t cell = cell_t();
+            Cell cell = Cell();
             std::string name = "";
 
             if (!parse_name(name))
@@ -629,28 +624,19 @@ namespace memdb
         return true;
     }
 
-    bool Parser::parse_column_name(std::pair<std::string, std::string>& ret)
+    bool Parser::parse_column_name(std::string& ret)
     {
         static const std::regex 
-            dot{"\\."};
+            dot{"[A-Za-z0-9_\\.]+"};
 
-        std::string name1, name2;
+        std::string str;
 
-        if(!parse_name(name1))
-            return false;
+        bool res = parse_name(str);
 
-        if (parse_pattern(dot))
-        {
-            if(!parse_name(name2))
-                throw InvalidColumnNameException();
-            ret.first = name1;
-            ret.second = name2;
-            return true;
-        }
-        ret.first = "";
-        ret.second = name1;
+        if (res)
+            ret = str;
 
-        return true;
+        return res;
     }
 
 

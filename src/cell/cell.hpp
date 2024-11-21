@@ -1,20 +1,22 @@
-#ifndef HEADER_GUARD_CELL_H
-#define HEADER_GUARD_CELL_H
+#ifndef HEADER_GUARD_CELL_CELL_H
+#define HEADER_GUARD_CELL_CELL_H
 
 #include <cstddef>
 #include <string>
 #include <variant>
 #include <iostream>
+#include <memory>
 #include <vector>
 #include <array>
 #include <unordered_map>
-
 #include <stdint.h>
-#include "db_exceptions.h"
+
+#include "database/db_exception.hpp"
 
 #define MAX_STRING_DATA 256U
 
-namespace memdb 
+
+namespace memdb
 {
     // Data types stored in table cell
     using Int32     = int32_t;
@@ -30,11 +32,11 @@ namespace memdb
     #endif // CACHE_STRINGS
 
     // Flags for types of data stored in one table column
-    enum ColumnType {
-        ColumnTypeInt32,
-        ColumnTypeBool,
-        ColumnTypeString,
-        ColumnTypeBytes
+    enum CellType {
+        INT32,
+        BOOL,
+        STRING,
+        BYTES
     };
 
     class Cell
@@ -57,10 +59,11 @@ namespace memdb
         bool is_string() const;
         bool is_bytes() const;
 
-        ColumnType get_type() const;
+        CellType get_type() const;
         std::string display() const;
 
         bool less(const Cell& other) const;
+        size_t hash() const;
 
         Int32           get_int() const;
         Bool            get_bool() const;
@@ -102,6 +105,19 @@ namespace memdb
         size_t size_;
     };
 
+    // Lexicographical comparison of two cells
+    struct CellCompare {
+        bool operator() (const Cell& lhs, const Cell& rhs) const {
+            return lhs.less(rhs);
+        }
+    };
+
+    struct CellHash {
+        size_t operator() (const Cell& lhs) const {
+            return lhs.hash();
+        }
+    };
+
 } // namespace memdb
 
-#endif // HEADER_GUARD_CELL_H
+#endif // HEADER_GUARD_CELL_CELL_H

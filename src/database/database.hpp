@@ -1,11 +1,7 @@
-#ifndef  HEADER_GUARD_DATABASE_H
-#define  HEADER_GUARD_DATABASE_H
+#ifndef HEADER_GUARD_DATABASE_DATABASE_H
+#define HEADER_GUARD_DATABASE_DATABASE_H
 
-#include <unordered_map>
-#include <memory>
-
-#include "table.h"
-#include "db_exceptions.h"
+#include "database/table.hpp"
 
 namespace memdb
 {
@@ -31,4 +27,4 @@ namespace memdb
     };
 } // namespace memdb
 
-#endif // HEADER_GUARD_DATABASE_H
+#endif // HEADER_GUARD_DATABASE_DATABASE_H

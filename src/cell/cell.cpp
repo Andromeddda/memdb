@@ -1,15 +1,14 @@
-#include "cell.h"
-
+#include "cell/cell.hpp"
 #include <algorithm>
 
 namespace memdb {
 
-    static const std::unordered_map<ColumnType, std::string>
+    static const std::unordered_map<CellType, std::string>
         type_to_str {
-            {ColumnTypeInt32, "Int32"},
-            {ColumnTypeBool, "Bool"},
-            {ColumnTypeString, "String"},
-            {ColumnTypeBytes, "Bytes"}
+            {CellType::INT32, "Int32"},
+            {CellType::BOOL, "Bool"},
+            {CellType::STRING, "String"},
+            {CellType::BYTES, "Bytes"}
         };
 
     Cell::Cell(Int32 value) : 
@@ -44,15 +43,15 @@ namespace memdb {
         value_ = std::move(a);
     }
 
-    ColumnType Cell::get_type() const
+    CellType Cell::get_type() const
     {
         if (is_int())
-            return ColumnTypeInt32;
+            return CellType::INT32;
         if (is_bool())
-            return ColumnTypeBool;
+            return CellType::BOOL;
         if (is_string())
-            return ColumnTypeString;
-        return ColumnTypeBytes;
+            return CellType::STRING;
+        return CellType::BYTES;
     }
 
     bool Cell::less(const Cell& other) const
@@ -62,6 +61,24 @@ namespace memdb {
 
         return this->value_ < other.value_;
 
+    }
+
+    size_t Cell::hash() const
+    {
+        CellType type = get_type();
+
+        switch (type)
+        {
+        case CellType::INT32: return std::hash<int>{}(get_int());
+        case CellType::BOOL : return std::hash<bool>{}(get_bool());
+        case CellType::STRING: return std::hash<std::string>{}(get_string());
+        default:
+            auto bytes = get_bytes();
+            std::string str = "";
+            for (std::byte b : bytes)
+                str += (char)b;
+            return std::hash<std::string>{}(str);
+        }
     }
 
     bool Cell::is_int() const 
@@ -153,17 +170,17 @@ namespace memdb {
     // Arithmetical operators (For Int32)
     Cell Cell::operator- () const
     {    
-        ColumnType type = get_type();
-        if (type != ColumnTypeInt32)
+        CellType type = get_type();
+        if (type != CellType::INT32)
             throw IncompatibleTypeOperatorException("-", type_to_str.at(type));
         return Cell(-get_int());
     }
 
     Cell Cell::operator-(const Cell& other) const
     {
-        if (get_type() != ColumnTypeInt32)
+        if (get_type() != CellType::INT32)
             throw IncompatibleTypeOperatorException("-", type_to_str.at(get_type()));
-        if (other.get_type() != ColumnTypeInt32)
+        if (other.get_type() != CellType::INT32)
             throw IncompatibleTypeOperatorException("-", type_to_str.at(other.get_type()));
 
         return Cell(get_int() - other.get_int());
@@ -172,12 +189,12 @@ namespace memdb {
 
     Cell Cell::operator/ (const Cell& other) const
     {
-        ColumnType type1 = get_type();
-        ColumnType type2 = other.get_type();
+        CellType type1 = get_type();
+        CellType type2 = other.get_type();
 
-        if (type1 != ColumnTypeInt32)
+        if (type1 != CellType::INT32)
             throw IncompatibleTypeOperatorException("/", type_to_str.at(type1));
-        if (type2 != ColumnTypeInt32)
+        if (type2 != CellType::INT32)
             throw IncompatibleTypeOperatorException("/", type_to_str.at(type2));
 
         if (!other.get_int())
@@ -188,12 +205,12 @@ namespace memdb {
 
     Cell Cell::operator% (const Cell& other) const
     {
-        ColumnType type1 = get_type();
-        ColumnType type2 = other.get_type();
+        CellType type1 = get_type();
+        CellType type2 = other.get_type();
 
-        if (type1 != ColumnTypeInt32)
+        if (type1 != CellType::INT32)
             throw IncompatibleTypeOperatorException("%", type_to_str.at(type1));
-        if (type2 != ColumnTypeInt32)
+        if (type2 != CellType::INT32)
             throw IncompatibleTypeOperatorException("%", type_to_str.at(type2));
 
         if (!other.get_int())
@@ -205,12 +222,12 @@ namespace memdb {
 
     Cell Cell::operator* (const Cell& other) const
     {
-        ColumnType type1 = get_type();
-        ColumnType type2 = other.get_type();
+        CellType type1 = get_type();
+        CellType type2 = other.get_type();
 
-        if (type1 != ColumnTypeInt32)
+        if (type1 != CellType::INT32)
             throw IncompatibleTypeOperatorException("*", type_to_str.at(type1));
-        if (type2 != ColumnTypeInt32)
+        if (type2 != CellType::INT32)
             throw IncompatibleTypeOperatorException("*", type_to_str.at(type2));
 
         if (!other.get_int())
@@ -221,17 +238,17 @@ namespace memdb {
 
     Cell Cell::operator+ (const Cell& other) const // Int32 and String
     {
-        ColumnType type1 = get_type();
-        ColumnType type2 = other.get_type();
+        CellType type1 = get_type();
+        CellType type2 = other.get_type();
 
-        if (type1 != ColumnTypeInt32 || type1 != ColumnTypeString)
+        if (type1 != CellType::INT32 || type1 != CellType::STRING)
             throw IncompatibleTypeOperatorException("*", type_to_str.at(type1));
-        if (type2 != ColumnTypeInt32 || type2 != ColumnTypeString)
+        if (type2 != CellType::INT32 || type2 != CellType::STRING)
             throw IncompatibleTypeOperatorException("*", type_to_str.at(type2));
         if (type1 != type2)
             throw DifferentTypesException("+");
 
-        if (type1 == ColumnTypeInt32)
+        if (type1 == CellType::INT32)
             return Cell(get_int() * other.get_int());
 
         return Cell(get_string() + other.get_string());
@@ -240,20 +257,20 @@ namespace memdb {
     // Logical operators (For Bool)
     Cell Cell::operator! () const
     {
-        ColumnType type = get_type();
-        if (type != ColumnTypeBool)
+        CellType type = get_type();
+        if (type != CellType::BOOL)
             throw IncompatibleTypeOperatorException("!", type_to_str.at(type));
         return Cell(!get_bool());
     }
 
     Cell Cell::operator&& (const Cell& other) const
     {
-        ColumnType type1 = get_type();
-        ColumnType type2 = other.get_type();
+        CellType type1 = get_type();
+        CellType type2 = other.get_type();
 
-        if (type1 != ColumnTypeBool)
+        if (type1 != CellType::BOOL)
             throw IncompatibleTypeOperatorException("&&", type_to_str.at(type1));
-        if (type2 != ColumnTypeBool)
+        if (type2 != CellType::BOOL)
             throw IncompatibleTypeOperatorException("&&", type_to_str.at(type2));
 
         return Cell(get_bool() && other.get_bool());
@@ -261,12 +278,12 @@ namespace memdb {
 
     Cell Cell::operator|| (const Cell& other) const 
     {
-        ColumnType type1 = get_type();
-        ColumnType type2 = other.get_type();
+        CellType type1 = get_type();
+        CellType type2 = other.get_type();
 
-        if (type1 != ColumnTypeBool)
+        if (type1 != CellType::BOOL)
             throw IncompatibleTypeOperatorException("||", type_to_str.at(type1));
-        if (type2 != ColumnTypeBool)
+        if (type2 != CellType::BOOL)
             throw IncompatibleTypeOperatorException("||", type_to_str.at(type2));
 
         return Cell(get_bool() || other.get_bool());
@@ -275,14 +292,14 @@ namespace memdb {
     // Bitwise operators (For Int32, Bool and Bytes)
     Cell Cell::operator~ ()
     {   
-        ColumnType type = get_type();
-        if (type == ColumnTypeString)
+        CellType type = get_type();
+        if (type == CellType::STRING)
             throw IncompatibleTypeOperatorException("~", "String");
 
-        if (type == ColumnTypeInt32)
+        if (type == CellType::INT32)
             return  Cell(~get_int());
 
-        if (type == ColumnTypeBool)
+        if (type == CellType::BOOL)
             return Cell(!get_bool());
 
         std::vector<std::byte> bt = get_bytes();
@@ -294,10 +311,10 @@ namespace memdb {
 
     Cell Cell::operator| (const Cell& other) const
     {
-        ColumnType type1 = get_type();
-        ColumnType type2 = other.get_type();
+        CellType type1 = get_type();
+        CellType type2 = other.get_type();
 
-        if (type1 == ColumnTypeString || type2 == ColumnTypeString)
+        if (type1 == CellType::STRING || type2 == CellType::STRING)
             throw IncompatibleTypeOperatorException("|", "String");
 
         if (type1 != type2)
@@ -305,10 +322,10 @@ namespace memdb {
         if (size_ != other.size_)
             throw DifferentSizeException("|");
 
-        if (type1 == ColumnTypeInt32)
+        if (type1 == CellType::INT32)
             return  Cell(get_int() | other.get_int());
 
-        if (type1 == ColumnTypeBool)
+        if (type1 == CellType::BOOL)
             return Cell(get_bool() | other.get_bool());
 
         std::vector<std::byte> bt1 = get_bytes();
@@ -321,10 +338,10 @@ namespace memdb {
 
     Cell Cell::operator& (const Cell& other) const
     {
-        ColumnType type1 = get_type();
-        ColumnType type2 = other.get_type();
+        CellType type1 = get_type();
+        CellType type2 = other.get_type();
 
-        if (type1 == ColumnTypeString || type2 == ColumnTypeString)
+        if (type1 == CellType::STRING || type2 == CellType::STRING)
             throw IncompatibleTypeOperatorException("&", "String");
 
         if (type1 != type2)
@@ -332,10 +349,10 @@ namespace memdb {
         if (size_ != other.size_)
             throw DifferentSizeException("&");
 
-        if (type1 == ColumnTypeInt32)
+        if (type1 == CellType::INT32)
             return  Cell(get_int() & other.get_int());
 
-        if (type1 == ColumnTypeBool)
+        if (type1 == CellType::BOOL)
             return Cell(get_bool() & other.get_bool());
 
         std::vector<std::byte> bt1 = get_bytes();
@@ -348,10 +365,10 @@ namespace memdb {
 
     Cell Cell::operator^ (const Cell& other) const
     {
-        ColumnType type1 = get_type();
-        ColumnType type2 = other.get_type();
+        CellType type1 = get_type();
+        CellType type2 = other.get_type();
 
-        if (type1 == ColumnTypeString || type2 == ColumnTypeString)
+        if (type1 == CellType::STRING || type2 == CellType::STRING)
             throw IncompatibleTypeOperatorException("^", "String");
 
         if (type1 != type2)
@@ -359,10 +376,10 @@ namespace memdb {
         if (size_ != other.size_)
             throw DifferentSizeException("^");
 
-        if (type1 == ColumnTypeInt32)
+        if (type1 == CellType::INT32)
             return  Cell(get_int() ^ other.get_int());
 
-        if (type1 == ColumnTypeBool)
+        if (type1 == CellType::BOOL)
             return Cell(get_bool() ^ other.get_bool());
 
         std::vector<std::byte> bt1 = get_bytes();
@@ -373,3 +390,4 @@ namespace memdb {
         return Cell(bt1);
     }
 } //namespace memdb
+
