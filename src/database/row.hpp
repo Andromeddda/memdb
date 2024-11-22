@@ -16,8 +16,9 @@ namespace memdb
     public:
         Row() = delete;
 
-        Row(Table* table, std::vector<Cell> data);
-        Row(Table* table, std::unordered_map<std::string, Cell> data);
+        Row(Table* table, const std::vector<Cell>& data);
+        Row(Table* table, std::vector<Cell>&& data);
+        Row(Table* table, const std::unordered_map<std::string, Cell>& data);
 
         Cell& operator[] (size_t index);
         const Cell& operator[] (size_t index) const;

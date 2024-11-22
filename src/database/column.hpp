@@ -22,8 +22,6 @@ namespace memdb
         CellType        type_;
         std::string     name_;
         unsigned char   attributes_;
-        Index index_;
-
 
         Column();
         Column(const char *name);

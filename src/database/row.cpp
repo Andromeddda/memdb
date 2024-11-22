@@ -3,11 +3,15 @@
 
 namespace memdb
 {
-    Row::Row(Table* table, std::vector<Cell> data) :
+    Row::Row(Table* table, const std::vector<Cell>& data) :
         table_(table), data_(data)
     { }
 
-    Row::Row(Table* table, std::unordered_map<std::string, Cell> data) :
+    Row::Row(Table* table, std::vector<Cell>&& data) :
+        table_(table), data_(data)
+    { }
+
+    Row::Row(Table* table, const std::unordered_map<std::string, Cell>& data) :
         table_(table)
     {
         data_.resize(table->width());

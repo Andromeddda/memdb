@@ -160,6 +160,14 @@ namespace memdb
         }
     };
 
+    class IncorrectWhereStatementException: public DatabaseException
+    {
+    public:
+        const char* what() const throw() {
+            return "Incorrect where station provided. Expression must evaluate to bool type\n"; 
+        }
+    };
+
 } // namespace memdb 
 
 #endif // HEADER_GUARD_DB_EXCEPTIONS_H

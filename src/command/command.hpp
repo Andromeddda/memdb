@@ -39,8 +39,8 @@ namespace memdb
     class SQLCreateTable : public SQLCommand
     {
     public:
-        SQLCreateTable(const std::string& name, ColumnMap& columns);
-        SQLCreateTable(const char*  name, ColumnMap& columns);
+        SQLCreateTable(const std::string& name, const std::vector<Column>& columns);
+        SQLCreateTable(const char*  name, const std::vector<Column>& columns);
 
         // Allocate table
         // Return pointer to it
@@ -49,7 +49,7 @@ namespace memdb
     private:
         const std::string name_; // Name of the table to create
 
-        const ColumnMap columns_; // Column descriptions
+        const std::vector<Column> columns_; // Column descriptions
     };
 
     class SQLInsertOrdered : public SQLCommand
@@ -86,8 +86,8 @@ namespace memdb
     class SQLSelect : public SQLCommand
     {
     public:
-        SQLSelect(const std::vector<std::string>& column_names, CommandPointer& argument_, 
-            ExpressionPointer& where_);
+        SQLSelect(const std::vector<std::string>& column_names, CommandPointer& argument, 
+            ExpressionPointer& where);
 
         // Allocate new table
         TablePointer execute(Database* database) override;

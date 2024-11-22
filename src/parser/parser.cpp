@@ -519,7 +519,7 @@ namespace memdb
         return parsed_attr && parsed_name && parsed_type;
     }
 
-    bool Parser::parse_column_description_list(ColumnMap& ret) 
+    bool Parser::parse_column_description_list(std::vector<Column>& ret) 
     {
         static const std::regex 
             open_par{"\\("};
@@ -531,18 +531,17 @@ namespace memdb
             return false;
         }
 
-        size_t index = 0;
-
         parse_whitespaces();
         
         bool end_of_list = false;
-        Column description;
+        Column column;
 
         while (!end_of_list) {
-            if (!parse_column_description(description))
+            if (!parse_column_description(column))
                 throw InvalidColumnDescriptionException();
 
-            ret[description] = index++;
+
+            ret.push_back(column);
             end_of_list = !parse_comma();
         }
 

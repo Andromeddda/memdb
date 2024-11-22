@@ -20,57 +20,79 @@ namespace memdb
         return database->get_table(name_);
     }
 
-    // //
-    // // Create Table
-    // //
+    //
+    // Create Table
+    //
 
-    // SQLCreateTable::SQLCreateTable(const std::string& name, ColumnMap& columns) :
-    //     name_(name), columns_(columns)
-    // { }
+    SQLCreateTable::SQLCreateTable(const std::string& name, const std::vector<Column>& columns) :
+        name_(name), columns_(columns)
+    { }
 
-    // SQLCreateTable::SQLCreateTable(const char*  name, ColumnMap& columns) :
-    //     name_(name), columns_(columns)
-    // { }
+    SQLCreateTable::SQLCreateTable(const char*  name, const std::vector<Column>& columns) :
+        name_(name), columns_(columns)
+    { }
 
-    // TablePointer SQLCreateTable::execute(Database* database)
-    // {
-    //     TablePointer table = TablePointer(new Table(name_, columns_));
-    //     database->add_table(table);
+    TablePointer SQLCreateTable::execute(Database* database)
+    {
+        TablePointer table = TablePointer(new Table(name_, columns_));
+        database->add_table(table);
 
-    //     return table;
-    // }
+        return table;
+    }
 
-    // //
-    // // Insert
-    // //
+    //
+    // Insert
+    //
 
-    // SQLInsertOrdered::SQLInsertOrdered(const std::string& name, const std::vector<Cell>& data) :
-    //     name_(name), data_(data)
-    // { }
+    SQLInsertOrdered::SQLInsertOrdered(const std::string& name, const std::vector<Cell>& data) :
+        name_(name), data_(data)
+    { }
 
-    // SQLInsertOrdered::SQLInsertOrdered(const char*   name, const std::vector<Cell>& data) :
-    //     name_(name), data_(data)
-    // { }
+    SQLInsertOrdered::SQLInsertOrdered(const char*   name, const std::vector<Cell>& data) :
+        name_(name), data_(data)
+    { }
+
+    TablePointer SQLInsertOrdered::execute(Database* database)
+    {
+        TablePointer table = database->get_table(name_);
+
+        table->insert_row_ordered(data_);
+
+        return table;
+    }
 
 
-    // SQLInsertUnordered::SQLInsertUnordered(const std::string& name, const std::unordered_map<std::string, Cell>& data) :
-    //     name_(name), data_(data)
-    // { }
+    SQLInsertUnordered::SQLInsertUnordered(const std::string& name, const std::unordered_map<std::string, Cell>& data) :
+        name_(name), data_(data)
+    { }
 
-    // SQLInsertUnordered::SQLInsertUnordered(const char*   name, const std::unordered_map<std::string, Cell>& data) :
-    //     name_(name), data_(data)
-    // { }
+    SQLInsertUnordered::SQLInsertUnordered(const char*   name, const std::unordered_map<std::string, Cell>& data) :
+        name_(name), data_(data)
+    { }
 
 
-    // TablePointer SQLInsert::execute(Database* database)
-    // {
-    //     TablePointer table = database->get_table(name_);
+    TablePointer SQLInsertUnordered::execute(Database* database)
+    {
+        TablePointer table = database->get_table(name_);
 
-    //     for (auto [desc, i]& : columns_)
-    //     {
+        table->insert_row_unordered(data_);
 
-    //     }
-    // }
+        return table;
+    }
+
+
+    SQLSelect::SQLSelect(const std::vector<std::string>& column_names, 
+        CommandPointer& argument, ExpressionPointer& where)
+    : column_names_(column_names), argument_(std::move(argument)), where_(std::move(where))
+    { }
+
+        // Allocate new table
+    TablePointer SQLSelect::execute(Database* database)
+    {
+        TablePointer table = argument_->execute(database);
+
+        return table->select(column_names_, where_.get());
+    }
 
 
 } // namespace memdb

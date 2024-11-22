@@ -82,7 +82,7 @@ namespace memdb
         bool parse_attribute_list(unsigned char& ret);
         bool parse_column_type(CellType& ret);
         bool parse_column_description(Column &ret);
-        bool parse_column_description_list(ColumnMap& ret);
+        bool parse_column_description_list(std::vector<Column>& ret);
 
         // parsing rows
         bool parse_row_ordered(std::vector<Cell>& ret);
