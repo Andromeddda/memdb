@@ -42,5 +42,3 @@ cmake --build ./build --target run_tests -j 4
 ```
 
 ### Repository structure
-
-![alt text](./graph.png)
