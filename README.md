@@ -1,14 +1,14 @@
 # memdb
 
-## Description
+### Description
 An in-memory SQL-based relational database management system implemented on C++.
 
-## Requirements
+### Requirements
 
 * CMake version 3.23 and newer
 * C++20 compiler
 
-## Building
+### Building
 
 * Cloning into repository
 ```
@@ -41,6 +41,6 @@ cmake --build ./build --target memdb -j 4
 cmake --build ./build --target run_tests -j 4
 ```
 
-## Repository structure
+### Repository structure
 
 ![alt text](./graph.png)
