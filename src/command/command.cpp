@@ -95,4 +95,20 @@ namespace memdb
     }
 
 
+    SQLUpdate::SQLUpdate(const std::string& name, 
+        std::unordered_map<std::string, ExpressionPointer>& set, 
+        ExpressionPointer& where)
+    : name_(name), set_(std::move(set)), where_(std::move(where))
+    { }
+
+    TablePointer SQLUpdate::execute(Database* database)
+    {
+        TablePointer table = database->get_table(name_);
+
+        table->update(set_, where_.get());
+
+        return table;
+    }
+
+
 } // namespace memdb

@@ -104,14 +104,14 @@ namespace memdb
     class SQLUpdate : public SQLCommand
     {
     public:
-        SQLUpdate(const std::vector<std::string>& column_names, 
-            std::unordered_map<std::string, ExpressionPointer>& set, 
-            ExpressionPointer& where);
+        SQLUpdate(const std::string& name, 
+        std::unordered_map<std::string, ExpressionPointer>& set, 
+        ExpressionPointer& where);
 
         TablePointer execute(Database* database) override;
 
     private:
-        std::vector<std::string> column_names_;  // Pairs of table-column names
+        std::string name_;
 
         std::unordered_map<std::string, ExpressionPointer>
             set_;   // Map with keys of column names and values of expressions to assign

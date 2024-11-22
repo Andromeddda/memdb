@@ -11,8 +11,8 @@
 
 namespace memdb
 {
-    typedef typename std::unordered_map<std::string, size_t>
-        ColumnMap;
+    // typedef typename std::unordered_map<std::string, size_t>
+    //     std::unordered_map<std::string, size_t>;
     /* 
         Table of a relational database with fixed name and set of columns
     */
@@ -46,37 +46,42 @@ namespace memdb
         // Access methods
         //
         size_t column_index(const std::string& column_name);
+        Column get_column(const std::string& column_name);
         size_t width() const;
+        size_t size() const;
 
         //
         // Query methods
         //
 
         void insert_row_ordered(
-            const std::vector<Cell>& data); /*  Insert new row
-                                                Replace existing row if one of unique keys already exist */
+            const std::vector<Cell>& data);
+
         void insert_row_ordered(
             std::vector<Cell>&& data);  
 
         void insert_row_unordered(
-            const std::unordered_map<std::string, Cell>& data); /*  Insert new row, represented as a map where
-                                                                    keys are column names, values are cell data.
-                                                                    Replace existing row if one of unique keys already exist */
+            const std::unordered_map<std::string, Cell>& data);
 
         std::shared_ptr<Table> select(
             const std::vector<std::string>& columns, Expression* where);
 
+        void delete_where(Expression* where);
+
+        void update(
+            const std::unordered_map<std::string, std::unique_ptr<Expression>>& assignment, 
+            Expression* where);
     private:
         const std::string
             name_;          // Table name
 
-        ColumnMap
-            column_map_;       // map of columns
+        std::unordered_map<std::string, size_t>
+            column_map_;    // map of columns
 
         std::vector<Column>
             columns_;
 
-        std::vector<Row> 
+        std::unordered_map<size_t, std::unique_ptr<Row>> 
             rows_;          // List of rows
     };
 } // namespace memdb

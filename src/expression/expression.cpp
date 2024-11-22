@@ -38,13 +38,13 @@ namespace memdb
         lhs_(std::move(lhs)), rhs_(std::move(rhs)), op_(op)
     { }
 
-    Cell ValueExpression::evaluate(const Row& row)
+    Cell ValueExpression::evaluate(Row* row)
     {
-        Table* table = row.get_table();
-        return row[table->column_index(column_name_)];
+        Table* table = row->get_table();
+        return (*row)[table->column_index(column_name_)];
     }
 
-    Cell UnaryExpression::evaluate(const Row& row)
+    Cell UnaryExpression::evaluate(Row* row)
     {
         switch (op_)
         {
@@ -55,7 +55,7 @@ namespace memdb
         }
     }
 
-    Cell BinaryExpression::evaluate(const Row& row)
+    Cell BinaryExpression::evaluate(Row* row)
     {
         switch (op_)
         {

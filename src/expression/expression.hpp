@@ -15,7 +15,7 @@ namespace memdb
         ADD, SUB, MUL, DIV, MOD, NEG,   // arithmetic  
         OR, AND, NOT,                   // logic
         XOR, BAND, BOR, BNEG,           // bitwise
-        EQ, NEQ, LE, LEQ, GR, GEQ       // compare
+        EQ, NEQ, LE, LEQ, GR, GEQ      // compare   
     };
 
     // Abstract class for expression tree node
@@ -24,7 +24,7 @@ namespace memdb
     public:
         Expression() = default;
         virtual ~Expression() = default;
-        virtual Cell evaluate(const Row& row) = 0;
+        virtual Cell evaluate(Row* row) = 0;
     };
 
     // Leave of expression tree
@@ -34,7 +34,7 @@ namespace memdb
         ValueExpression(const std::string& column_name);
         ~ValueExpression() override = default;
 
-        Cell evaluate(const Row& row) override;
+        Cell evaluate(Row* row) override;
     private:
         std::string column_name_;
     };
@@ -46,7 +46,7 @@ namespace memdb
         UnaryExpression(std::unique_ptr<Expression> lhs, Operation op);
         ~UnaryExpression() override = default;
 
-        Cell evaluate(const Row& row) override;
+        Cell evaluate(Row* row) override;
     private:
         std::unique_ptr<Expression> lhs_;
         Operation op_;
@@ -60,7 +60,7 @@ namespace memdb
             std::unique_ptr<Expression> rhs, Operation op);
         ~BinaryExpression() override = default;
 
-        Cell evaluate(const Row& row) override;
+        Cell evaluate(Row* row) override;
     private:
         std::unique_ptr<Expression> lhs_;
         std::unique_ptr<Expression> rhs_;
