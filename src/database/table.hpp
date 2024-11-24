@@ -11,8 +11,6 @@
 
 namespace memdb
 {
-    // typedef typename std::unordered_map<std::string, size_t>
-    //     std::unordered_map<std::string, size_t>;
     /* 
         Table of a relational database with fixed name and set of columns
     */
@@ -22,12 +20,14 @@ namespace memdb
     class Table 
     {
     public:
-        // Tables are not default constructible, copyable nor movable
-        Table()                                 = delete;
-        Table(Table&& other)                    = delete;
+        // Tables are not default constructible or copyable
+        Table()                                 = default;
         Table(const Table& other)               = delete;
-        Table& operator= (Table&& other)        = delete;
         Table& operator= (const Table& other)   = delete;
+
+        // Tables are movable
+        Table(Table&& other)                    = default;
+        Table& operator= (Table&& other)        = default;
 
         // Construct with name and map of columns
         Table(const std::string& table_name, 
@@ -36,47 +36,34 @@ namespace memdb
         Table(const char* name, 
             const std::vector<Column>& columns);
 
-        // Getter for table name
-        std::string name();
+        
+        std::string name();     // Table name
+        size_t width() const;   // Number of columns
+        size_t size() const;    // Number of rows
+        size_t column_position(const std::string& column_name) const;
 
-        // Print the table to the output stream
-        void display(std::ostream& os);
-
-        //
-        // Access methods
-        //
-        size_t column_index(const std::string& column_name);
-        Column get_column(const std::string& column_name);
-        size_t width() const;
-        size_t size() const;
 
         //
         // Query methods
         //
 
-        void insert_row_ordered(
-            const std::vector<Cell>& data);
+        void insert(const std::vector<Cell>& data);
+        void insert(std::vector<Cell>&& data);  
+        void insert(const std::unordered_map<std::string, Cell>& data);
 
-        void insert_row_ordered(
-            std::vector<Cell>&& data);  
+        void update(const std::unordered_map<std::string, Expression>& assignment, 
+            const Expression& where);
 
-        void insert_row_unordered(
-            const std::unordered_map<std::string, Cell>& data);
+        Table* select(const std::vector<std::string>& columns, const Expression& where);
 
-        std::shared_ptr<Table> select(
-            const std::vector<std::string>& columns, Expression* where);
+        void drop(const Expression& where);
 
-        void delete_where(Expression* where);
-
-        void update(
-            const std::unordered_map<std::string, std::unique_ptr<Expression>>& assignment, 
-            Expression* where);
     private:
-        const std::string
+        std::string
             name_;          // Table name
 
         std::unordered_map<std::string, size_t>
-            column_map_;    // map of columns
+            column_positions_;    // map of columns
 
         std::vector<Column>
             columns_;

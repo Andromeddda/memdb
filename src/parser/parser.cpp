@@ -1,4 +1,6 @@
 #include "parser/parser.hpp"
+#include "expression/expression.hpp"
+#include "command/command.hpp"
 
 #include <ctype.h>
 #include <assert.h>
@@ -639,7 +641,7 @@ namespace memdb
     }
 
 
-    bool Parser::parse_expression(std::unique_ptr<Expression>& ret)
+    bool Parser::parse_expression(Expression& ret)
     {
         static const std::regex 
             pattern(".+");
@@ -651,7 +653,7 @@ namespace memdb
 
         std::vector<std::string> tokens = tokenize_expression(str);
 
-        ret = std::move(parse_expression(tokens));
+        ret = Expression(parse_expression(tokens));
 
         return true;
     }
@@ -700,12 +702,12 @@ namespace memdb
         return res;
     }
 
-    std::unique_ptr<Expression> Parser::parse_expression(const std::vector<std::string>& tokens)
+    std::unique_ptr<ExpressionNode> Parser::parse_expression(const std::vector<std::string>& tokens)
     {
         return parse_expression_r(tokens, tokens.begin(), tokens.end());
     }
 
-    std::unique_ptr<Expression> Parser::parse_expression_r(const std::vector<std::string>& tokens, 
+    std::unique_ptr<ExpressionNode> Parser::parse_expression_r(const std::vector<std::string>& tokens, 
         VecPosition pos, VecPosition end)
     {
         size_t parenthesis = 0;
@@ -721,43 +723,37 @@ namespace memdb
         VecPosition It = begin;
         VecPosition root = end;
 
-        while (It != end)
+        for (; It != end; It++)
         {
             if (*It == "(") {
-                It++;
                 parenthesis += 10;
                 continue;
             }
 
             if (*It == ")") {
-                It++;
                 parenthesis -= 10;
                 continue;
             }
 
             // skip names
             if (!token_is_operation(*It)) 
-            {
-                It++;
                 continue;
-            }
 
             size_t prior = parenthesis + str_to_prior.at(*It);
             if (prior < min_prior) {
                 min_prior = prior;
                 root = It;
             }
-            It++;
         }
 
         // Unary iterator
         if (root == begin) 
         {
             if (*root == "-")
-                return std::unique_ptr<Expression>(
+                return std::unique_ptr<ExpressionNode>(
                     new UnaryExpression(parse_expression_r(tokens, root + 1, end), NEG));
 
-            return std::unique_ptr<Expression>(
+            return std::unique_ptr<ExpressionNode>(
                     new UnaryExpression(parse_expression_r(tokens, root + 1, end), str_to_op.at(*root)));
         }
 
@@ -767,13 +763,13 @@ namespace memdb
             if (token_is_operation(*begin))
                 throw IncorrectNameException();
 
-            return std::unique_ptr<Expression>(
+            return std::unique_ptr<ExpressionNode>(
                     new ValueExpression(*begin));
         }
 
 
         // Binary iterator
-        return std::unique_ptr<Expression>(
+        return std::unique_ptr<ExpressionNode>(
                     new BinaryExpression(
                         parse_expression_r(tokens, begin, root), 
                         parse_expression_r(tokens, root + 1, end), 

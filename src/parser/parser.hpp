@@ -5,9 +5,8 @@
 #include <string>
 #include <cstddef>
 
-#include "expression/expression.hpp"
-#include "command/command.hpp"
 #include "cell/cell.hpp"
+#include "database/column.hpp"
 #include "parser/parse_exception.hpp"
 
 namespace memdb
@@ -33,6 +32,10 @@ namespace memdb
         IndexOn,
         By
     };
+
+    class Expression;
+    class ExpressionNode;
+    class SQLCommand;
 
     class Parser
     {
@@ -89,15 +92,15 @@ namespace memdb
         bool parse_row_unordered(std::unordered_map<std::string, Cell>& ret);
 
         bool parse_column_name(std::string& ret);
-        bool parse_expression(std::unique_ptr<Expression>& ret);
+        bool parse_expression(Expression& ret);
 
         using VecPosition = typename std::vector<std::string>::const_iterator;
 
         static bool parse_pattern_static(std::regex regexp, Position& pos_, Position& end_);
         static bool parse_pattern_static(std::regex regexp, Position& pos_, Position& end_, std::string& ret);
         static std::vector<std::string> tokenize_expression(const std::string& str);
-        static std::unique_ptr<Expression> parse_expression(const std::vector<std::string>& tokens);
-        static std::unique_ptr<Expression> parse_expression_r(const std::vector<std::string>& tokens, 
+        static std::unique_ptr<ExpressionNode> parse_expression(const std::vector<std::string>& tokens);
+        static std::unique_ptr<ExpressionNode> parse_expression_r(const std::vector<std::string>& tokens, 
             VecPosition pos, VecPosition end);
 
         Position pos_;

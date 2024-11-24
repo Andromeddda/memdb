@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "cell/cell.hpp"
+#include "parser/parser.hpp"
 #include "database/table.hpp"
 
 namespace memdb
@@ -18,17 +19,38 @@ namespace memdb
         EQ, NEQ, LE, LEQ, GR, GEQ      // compare   
     };
 
-    // Abstract class for expression tree node
-    class Expression
+    // Abstract class for ExpressionNode tree node
+    class ExpressionNode
     {
     public:
-        Expression() = default;
-        virtual ~Expression() = default;
+        ExpressionNode() = default;
+        virtual ~ExpressionNode() = default;
         virtual Cell evaluate(Row* row) = 0;
     };
 
-    // Leave of expression tree
-    class ValueExpression : public Expression
+    class Expression
+    {
+    public:
+        // Expressions are not default constructible or copyalbe
+        Expression()                                    = delete;
+        Expression(const Expression& other)             = delete;
+        Expression& operator=(const Expression& other)  = delete;
+
+        // Expressions are movable
+        Expression(Expression&& other)             = default;
+        Expression& operator=(Expression&& other)  = default;
+
+        Cell evaluate(Row* row) const;
+        ~Expression() = default;
+    private:
+        friend class Parser;
+        Expression(std::unique_ptr<ExpressionNode> root);
+
+        std::unique_ptr<ExpressionNode> root_;
+    };
+
+    // Leave of ExpressionNode tree
+    class ValueExpression : public ExpressionNode
     {
     public:
         ValueExpression(const std::string& column_name);
@@ -39,31 +61,31 @@ namespace memdb
         std::string column_name_;
     };
 
-    // Node of expression tree with one child
-    class UnaryExpression : public Expression
+    // Node of ExpressionNode tree with one child
+    class UnaryExpression : public ExpressionNode
     {
     public:
-        UnaryExpression(std::unique_ptr<Expression> lhs, Operation op);
+        UnaryExpression(std::unique_ptr<ExpressionNode> lhs, Operation op);
         ~UnaryExpression() override = default;
 
         Cell evaluate(Row* row) override;
     private:
-        std::unique_ptr<Expression> lhs_;
+        std::unique_ptr<ExpressionNode> lhs_;
         Operation op_;
     };
 
-    // Node of expression tree with two children
-    class BinaryExpression : public Expression
+    // Node of ExpressionNode tree with two children
+    class BinaryExpression : public ExpressionNode
     {
     public:
-        BinaryExpression(std::unique_ptr<Expression> lhs, 
-            std::unique_ptr<Expression> rhs, Operation op);
+        BinaryExpression(std::unique_ptr<ExpressionNode> lhs, 
+            std::unique_ptr<ExpressionNode> rhs, Operation op);
         ~BinaryExpression() override = default;
 
         Cell evaluate(Row* row) override;
     private:
-        std::unique_ptr<Expression> lhs_;
-        std::unique_ptr<Expression> rhs_;
+        std::unique_ptr<ExpressionNode> lhs_;
+        std::unique_ptr<ExpressionNode> rhs_;
         Operation op_;
     };
 

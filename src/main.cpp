@@ -3,28 +3,50 @@
 #include "command/command.hpp"
 #include "expression/expression.hpp"
 
+#include <ostream>
+#include <iostream>
+
 
 using namespace std;
 
-class A
+template <typename A, typename B>
+ostream& operator<< (ostream& os, unordered_map<A, B> mp)
 {
-private:
-	int x;
-public:
-	A() : x(0) { cout << "A()\n"; }
-	~A() { cout << "~A()\n"; }
-};
+	for (auto &[a, b] : mp) {
+		os << "{ " << a << ": " << b << " } ";
+	}
+	os << '\n';
+	return os;
+}
 
 int main (void) 
 {
-	cout <<  "Create vector a\n";
-	std::vector<std::unique_ptr<A>> a;
+	std::unordered_map<int, int>
+		mp;
 
-	cout <<  "Push to vector a\n";
-	a.push_back(std::unique_ptr<A>(new A()));
+	for (int i = 0; i < 10; i++)
+		mp[i] = i*i;
+
+	cout << mp;
+
 	
-	cout <<  "Copy vector a\n";
-	std::vector<std::unique_ptr<A>>b = std::move(a);
+
+	int max = 0;
+	for (int i = 0; i < (int)mp.size(); i++)
+	{
+		if (mp.find(i) == mp.end())
+			continue;
+
+		if (!(mp[i] % 2 == 1))
+			mp[max++] = mp[i];
+	}
+
+	int size = (int)mp.size();
+	for (int i = max; i < size; i++)
+		mp.erase(i);
+
+	cout << mp;
+
 
 	return 0;
 }

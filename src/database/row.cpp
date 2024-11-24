@@ -16,7 +16,7 @@ namespace memdb
     {
         data_.resize(table->width());
         for (auto &[name, cell]: data) {
-            data_[table->column_index(name)] = cell;
+            data_[table->column_position(name)] = cell;
         }
     }
 

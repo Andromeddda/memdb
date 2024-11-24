@@ -1,27 +1,38 @@
 #ifndef HEADER_GUARD_COMMAND_COMMAND_H
 #define HEADER_GUARD_COMMAND_COMMAND_H
 
-#include "database/database.hpp"
-#include "expression/expression.hpp"
 #include <memory>
 #include <vector>
 #include <string>
 #include <unordered_map>
 
+#include "command/result.hpp"
+#include "database/table.hpp"
+#include "expression/expression.hpp"
+
 namespace memdb 
 {
-    // Note: TablePointer = std::shared_ptr<Table>
+    class Database;
+
+    class Command
+    {
+    public:
+        Result execute(Database* database);
+    private:
+        friend class Parser;
+        Command(std::unique_ptr<SQLCommand>& root);
+
+        std::unique_ptr<SQLCommand> root_;
+    };
 
     class SQLCommand 
     {
     public:
         SQLCommand() {}
         virtual ~SQLCommand() {}
-        virtual TablePointer execute(Database* database) = 0;
+        virtual Result execute(Database* database) = 0;
     };
 
-    typedef std::unique_ptr<Expression> ExpressionPointer;
-    typedef std::unique_ptr<SQLCommand> CommandPointer;
 
     class GetTable : public SQLCommand
     {
@@ -30,7 +41,7 @@ namespace memdb
         GetTable(const char* name);
 
         // Return a pointer to existing table from database
-        TablePointer execute(Database* database) override;
+        Result execute(Database* database) override;
 
     private:
         const std::string name_;
@@ -44,7 +55,7 @@ namespace memdb
 
         // Allocate table
         // Return pointer to it
-        TablePointer execute(Database* database) override;
+        Result execute(Database* database) override;
 
     private:
         const std::string name_; // Name of the table to create
@@ -60,7 +71,7 @@ namespace memdb
 
         // Insert a row_ to a table with provided name
         // Return a smart pointer to the same table
-        TablePointer execute(Database* database) override;
+        Result execute(Database* database) override;
 
     private:
         const std::string   name_; // Name of the table to insert to
@@ -75,7 +86,7 @@ namespace memdb
 
         // Insert a row_ to a table with provided name
         // Return a smart pointer to the same table
-        TablePointer execute(Database* database) override;
+        Result execute(Database* database) override;
 
     private:
         const std::string   name_; // Name of the table to insert to
@@ -86,49 +97,59 @@ namespace memdb
     class SQLSelect : public SQLCommand
     {
     public:
-        SQLSelect(const std::vector<std::string>& column_names, CommandPointer& argument, 
-            ExpressionPointer& where);
+        SQLSelect(const std::vector<std::string>& column_names, std::unique_ptr<SQLCommand>& argument, 
+            Expression& where);
 
         // Allocate new table
-        TablePointer execute(Database* database) override;
+        Result execute(Database* database) override;
 
     private:
         std::vector<std::string> column_names_;  // Pairs of table-column names
 
-        CommandPointer argument_;   // A table to select from, represented as a command.
-                                    // If the table is provided straightforward by name, GetTable class is used
+        std::unique_ptr<SQLCommand> 
+                argument_;   // A table to select from, represented as a Result.
+                             // If the table is provided straightforward by name, GetTable class is used
         
-        ExpressionPointer where_;     // Expression tree of conditions provided with WHERE 
+        Expression where_;     // Expression tree of conditions provided with WHERE 
     };
 
     class SQLUpdate : public SQLCommand
     {
     public:
         SQLUpdate(const std::string& name, 
-        std::unordered_map<std::string, ExpressionPointer>& set, 
-        ExpressionPointer& where);
+        std::unordered_map<std::string, Expression>& set, 
+        Expression& where);
 
-        TablePointer execute(Database* database) override;
+        Result execute(Database* database) override;
 
     private:
         std::string name_;
 
-        std::unordered_map<std::string, ExpressionPointer>
+        std::unordered_map<std::string, Expression>
             set_;   // Map with keys of column names and values of expressions to assign
 
-        ExpressionPointer where_;     // Expression tree of conditions provided with WHERE 
+        Expression where_;     // Expression tree of conditions provided with WHERE 
     };
 
     class SQLDelete : public SQLCommand
     {
     public:
-        SQLDelete(const ExpressionPointer& where);
+        SQLDelete(Expression& where);
 
-        TablePointer execute(Database* database) override;
+        Result execute(Database* database) override;
 
     private:
-        ExpressionPointer where_;     // Expression tree of conditions provided with WHERE 
+        Expression where_;     // Expression tree of conditions provided with WHERE 
     };
+
+
+    // class GetTable;
+    // class SQLCreateTable;
+    // class SQLInsertOrdered;
+    // class SQLInsertUnordered;
+    // class SQLSelect;
+    // class SQLUpdate;
+    // class SQLDelete;
 
     class SQLJoin;
     class SQLCreateIndex;

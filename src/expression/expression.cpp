@@ -2,6 +2,16 @@
 
 namespace memdb
 {
+
+    Expression::Expression(std::unique_ptr<ExpressionNode> root)
+    : root_(std::move(root))
+    { }
+
+    Cell Expression::evaluate(Row* row) const
+    {
+        return root_->evaluate(row);
+    }
+
     static const std::unordered_map<Operation, std::string>
         op_to_str = {
             { ADD, "+"},
@@ -29,19 +39,19 @@ namespace memdb
         column_name_(column_name)
     { }
 
-    UnaryExpression::UnaryExpression(std::unique_ptr<Expression> lhs, Operation op) :
+    UnaryExpression::UnaryExpression(std::unique_ptr<ExpressionNode> lhs, Operation op) :
         lhs_(std::move(lhs)), op_(op)
     { }
 
-    BinaryExpression::BinaryExpression(std::unique_ptr<Expression> lhs, 
-            std::unique_ptr<Expression> rhs, Operation op) :
+    BinaryExpression::BinaryExpression(std::unique_ptr<ExpressionNode> lhs, 
+            std::unique_ptr<ExpressionNode> rhs, Operation op) :
         lhs_(std::move(lhs)), rhs_(std::move(rhs)), op_(op)
     { }
 
     Cell ValueExpression::evaluate(Row* row)
     {
         Table* table = row->get_table();
-        return (*row)[table->column_index(column_name_)];
+        return (*row)[table->column_position(column_name_)];
     }
 
     Cell UnaryExpression::evaluate(Row* row)

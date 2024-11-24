@@ -1,8 +1,20 @@
 #include "command/command.hpp"
+#include "database/database.hpp"
 #include <utility>
 
 namespace memdb 
 {
+
+    Result Command::execute(Database* database)
+    {
+        return root_->execute(database);
+    }
+
+    Command::Command(std::unique_ptr<SQLCommand>& root)
+    : root_(std::move(root))
+    { }
+
+
     //
     // GetTable
     //
@@ -15,9 +27,18 @@ namespace memdb
         name_(name)
     { }
 
-    TablePointer GetTable::execute(Database* database)
+    Result GetTable::execute(Database* database)
     {
-        return database->get_table(name_);
+        Table* table;
+
+        try {
+            table = database->get_table(name_);
+            return Result(table);
+        }
+        catch (DatabaseException& ex)
+        {
+            return Result(ex.what());
+        }
     }
 
     //
@@ -32,12 +53,18 @@ namespace memdb
         name_(name), columns_(columns)
     { }
 
-    TablePointer SQLCreateTable::execute(Database* database)
+    Result SQLCreateTable::execute(Database* database)
     {
-        TablePointer table = TablePointer(new Table(name_, columns_));
-        database->add_table(table);
-
-        return table;
+        try
+        {
+            Table* table = new Table(name_, columns_);
+            database->add_table(table);
+            return Result(database->get_table(name_));
+        }
+        catch (DatabaseException& ex)
+        {
+            return Result(ex.what());
+        }
     }
 
     //
@@ -52,13 +79,18 @@ namespace memdb
         name_(name), data_(data)
     { }
 
-    TablePointer SQLInsertOrdered::execute(Database* database)
+    Result SQLInsertOrdered::execute(Database* database)
     {
-        TablePointer table = database->get_table(name_);
-
-        table->insert_row_ordered(data_);
-
-        return table;
+        try
+        {
+            Table* table = database->get_table(name_);
+            table->insert(data_);
+            return Result(table);
+        }
+        catch (DatabaseException& ex)
+        {
+            return Result(ex.what());
+        }
     }
 
 
@@ -71,43 +103,63 @@ namespace memdb
     { }
 
 
-    TablePointer SQLInsertUnordered::execute(Database* database)
+    Result SQLInsertUnordered::execute(Database* database)
     {
-        TablePointer table = database->get_table(name_);
-
-        table->insert_row_unordered(data_);
-
-        return table;
+        try
+        {
+            Table* table = database->get_table(name_);
+            table->insert(data_);
+            return Result(table);
+        }
+        catch (DatabaseException& ex)
+        {
+            return Result(ex.what());
+        }
     }
 
 
     SQLSelect::SQLSelect(const std::vector<std::string>& column_names, 
-        CommandPointer& argument, ExpressionPointer& where)
+        std::unique_ptr<SQLCommand>& argument, Expression& where)
     : column_names_(column_names), argument_(std::move(argument)), where_(std::move(where))
     { }
 
         // Allocate new table
-    TablePointer SQLSelect::execute(Database* database)
+    Result SQLSelect::execute(Database* database)
     {
-        TablePointer table = argument_->execute(database);
-
-        return table->select(column_names_, where_.get());
+        Result arg = argument_->execute(database);
+        if (!arg.ok())
+            return arg;
+        try
+        {
+            Table* table = arg.get_table();
+            Table* ret = table->select(column_names_, where_);
+            return Result(ret);
+        }
+        catch (DatabaseException& ex)
+        {
+            return Result(ex.what());
+        }
     }
 
 
     SQLUpdate::SQLUpdate(const std::string& name, 
-        std::unordered_map<std::string, ExpressionPointer>& set, 
-        ExpressionPointer& where)
+        std::unordered_map<std::string, Expression>& set, 
+        Expression& where)
     : name_(name), set_(std::move(set)), where_(std::move(where))
     { }
 
-    TablePointer SQLUpdate::execute(Database* database)
+    Result SQLUpdate::execute(Database* database)
     {
-        TablePointer table = database->get_table(name_);
-
-        table->update(set_, where_.get());
-
-        return table;
+        try
+        {
+            Table* table = database->get_table(name_);
+            table->update(set_, where_);
+            return Result(table);
+        }
+        catch (DatabaseException& ex)
+        {
+            return Result(ex.what());
+        }
     }
 
 

@@ -4,35 +4,26 @@
 namespace memdb
 {
     // Construct with string name and vector of columns
-    Table::Table(const std::string& table_name, 
-            const std::vector<Column>& columns) :
-    name_(table_name), columns_(columns), rows_()
+    Table::Table(const std::string& table_name, const std::vector<Column>& columns) 
+    : name_(table_name), columns_(columns)
     {
         for (auto i = 0LU; i < columns_.size(); ++i)
-            column_map_[columns_[i].name_] = i;
+            column_positions_[columns_[i].name_] = i;
     }
 
     // Construct with char* name and vector of columns
-    Table::Table(const char* table_name, 
-            const std::vector<Column>& columns) :
-    name_(table_name), columns_(columns), rows_()
+    Table::Table(const char* table_name, const std::vector<Column>& columns) 
+    : name_(table_name), columns_(columns)
     {
         for (auto i = 0LU; i < columns_.size(); ++i)
-            column_map_[columns_[i].name_] = i;
+            column_positions_[columns_[i].name_] = i;
     }
 
-    // getter for name
     std::string Table::name() 
     {
         return name_; 
     }
 
-    // Print the table to the output stream
-    void Table::display(std::ostream& os) {
-        (void)os;
-    }
-
-    // get the number of columns
     size_t Table::width() const 
     {
         return columns_.size();
@@ -43,92 +34,86 @@ namespace memdb
         return rows_.size();
     }
 
-    // get the number of column by its name
-    size_t Table::column_index(const std::string& column_name)
+    size_t Table::column_position(const std::string& column_name) const
     {
-        return column_map_.at(column_name);
+        return column_positions_.at(column_name);
     }
 
-    Column Table::get_column(const std::string& column_name)
-    {
-        return columns_[column_index(column_name)];
-    }
-
-    void Table::insert_row_ordered(const std::vector<Cell>& data)
+    void Table::insert(const std::vector<Cell>& data)
     {
         rows_[this->size() + 1] = std::unique_ptr<Row>(new Row(this, data));
     }
 
-    void Table::insert_row_ordered(std::vector<Cell>&& data)
+    void Table::insert(std::vector<Cell>&& data)
     {
         rows_[this->size() + 1] = std::unique_ptr<Row>(new Row(this, data));
     }
 
-    void Table::insert_row_unordered(const std::unordered_map<std::string, Cell>& data)
+    void Table::insert(const std::unordered_map<std::string, Cell>& data)
     {
         rows_[this->size() + 1] = std::unique_ptr<Row>(new Row(this, data));
     }
 
     // Query select method
     // Allocates new table
-    std::shared_ptr<Table> Table::select(
-        const std::vector<std::string>& columns, Expression* where)
+    Table* Table::select(
+        const std::vector<std::string>& columns, const Expression& where)
     {
         // Create column list of new table
         std::vector<Column> res_columns;
 
         for (auto col_name : columns) // run through every selected column name
-            res_columns.push_back(get_column(col_name));
-
+            res_columns.push_back(columns_[column_positions_[col_name]]);
         // Allocate new table
-        auto res = std::shared_ptr<Table>(new Table("", res_columns));
+        
+        Table* res = new Table("", res_columns);
 
         // initialize new row with the width of new table
         auto res_row = std::vector<Cell>(res->width());
 
         // go through every row in the table
-        for (auto &[j, row] : rows_)
+        for (auto &[row_i, row] : rows_)
         {
-            bool selected = where ? where->evaluate(row.get()).get_bool() : true;
-            if (!selected) continue;
+            if (!where.evaluate(row.get()).get_bool())
+                continue;
 
             // assign new row cells to old row cells
             for (auto i = 0LU; i < res->width(); ++i)
                 res_row[i] = (*row)[              
-                    column_map_[               
+                    column_positions_[               
                         res_columns[i].name_ // (1) name of column
                         ]                    // (2) index of column with this name in the old table 
                     ];                       // (3) column on this index 
 
             // move new row to new table
-            res->insert_row_ordered(std::move(res_row));
+            res->insert(std::move(res_row));
         }
 
         return res;
     }
 
-    void Table::delete_where(Expression* where)
+    void Table::drop(const Expression& where)
     {
-        for (auto &[i, row] : rows_)
+        for (auto &[row_i, row] : rows_)
         {
-            bool selected = where ? where->evaluate(row.get()).get_bool() : true;
-            if (!selected) continue;
+            if (!where.evaluate(row.get()).get_bool())
+                continue;
 
-            rows_.erase(i);
+            rows_.erase(row_i);
         }
     }
 
     void Table::update(
-        const std::unordered_map<std::string, std::unique_ptr<Expression>>& assignment, Expression* where)
+        const std::unordered_map<std::string, Expression>& assignment, const Expression& where)
     {
         for (auto &[i, row] : rows_)
         {
-            bool selected = where ? where->evaluate(row.get()).get_bool() : true;
-            if (!selected) continue;
+            if (!where.evaluate(row.get()).get_bool())
+                continue;
 
-            for (auto &[destination, assignment] : assignment)
+            for (auto &[col_name, rhs] : assignment)
             {
-                (*row)[column_index(destination)] = assignment->evaluate(row.get());
+                (*row)[column_positions_[col_name]] = rhs.evaluate(row.get());
             }
         }
     }

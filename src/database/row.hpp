@@ -14,11 +14,18 @@ namespace memdb
     class Row
     {
     public:
-        Row() = delete;
+        // Rows are not default constructible or copyable
+        Row()                               = delete;
+        Row(const Row& other)               = delete;
+        Row& operator= (const Row& other)   = delete;
 
-        Row(Table* table, const std::vector<Cell>& data);
+        // Rows are movable
+        Row(Row&& other)            = default;
+        Row& operator=(Row&& other) = default;
+
+        Row(Table* table, std::vector<Cell> const &data);
         Row(Table* table, std::vector<Cell>&& data);
-        Row(Table* table, const std::unordered_map<std::string, Cell>& data);
+        Row(Table* table, std::unordered_map<std::string, Cell> const &data);
 
         Cell& operator[] (size_t index);
         const Cell& operator[] (size_t index) const;
