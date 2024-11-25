@@ -11,6 +11,51 @@ namespace memdb
         ParseException() = default;
     };
 
+    //
+    // Lexems
+    //
+
+    // variable names
+    class InvalidNameException: public ParseException
+    {
+    public:
+        const char* what() const throw() {
+            return "[PARSE ERROR] : Incorrect variable name provided. Name cannot be empty, an operator token, or contain space symbols\n"; 
+        }
+    };
+
+    // table names
+    class InvalidTableNameException : public ParseException
+    {
+    public:
+        const char* what() const throw() {
+            return "[PARSE ERROR] : Invalid table name provided\n"; 
+        }
+    };
+
+    // commands
+    class UnknowCommandException : public ParseException
+    {
+    public:
+        const char* what() const throw() {
+            return "[PARSE ERROR] : unknown command\n"; 
+        }
+    };
+
+    // keywords
+    class IncorrectKeywordException  : public ParseException
+    {
+    public:
+        const char* what() const throw() {
+            return "[PARSE ERROR] : unexpected or incorrect keyword\n"; 
+        }
+    };
+
+    //
+    // Sequences
+    //
+
+    // escape secuence in string
     class InvalidEscapeSequenceException : public ParseException
     {
     public:
@@ -19,6 +64,7 @@ namespace memdb
         }
     };
 
+    // hex 
     class InvalidHexValueException : public ParseException
     {
     public:
@@ -27,14 +73,7 @@ namespace memdb
         }
     };
 
-    class AttributeException : public ParseException
-    {
-    public:
-        const char* what() const throw() {
-            return "[PARSE ERROR] : Invalid attribute list\n"; 
-        }
-    };
-
+    // column description
     class InvalidColumnDescriptionException : public ParseException
     {
     public:
@@ -43,11 +82,23 @@ namespace memdb
         }
     };
 
-    class InvalidTableNameException : public ParseException
+    // set assignment
+    class InvalidSetAssignmentException : public ParseException
     {
     public:
         const char* what() const throw() {
-            return "[PARSE ERROR] : Invalid table name\n"; 
+            return "[PARSE ERROR] : Invalid list of set assignment\n"; 
+        }
+    };
+
+    //
+    // Lists
+    //
+    class AttributeException : public ParseException
+    {
+    public:
+        const char* what() const throw() {
+            return "[PARSE ERROR] : Invalid attribute list\n"; 
         }
     };
 
@@ -59,13 +110,6 @@ namespace memdb
         }
     };
 
-    class InvalidSetAssignmentException : public ParseException
-    {
-    public:
-        const char* what() const throw() {
-            return "[PARSE ERROR] : Invalid list of set assignment\n"; 
-        }
-    };
 
     class InvalidPositionedRowException : public ParseException
     {
@@ -91,35 +135,11 @@ namespace memdb
         }
     };
 
-    class IncorrectNameException: public ParseException
-    {
-    public:
-        const char* what() const throw() {
-            return "[PARSE ERROR] : Incorrect variable name provided to exception. Name cannot be empty, an operator token, or contain space symbols\n"; 
-        }
-    };
-
-    class UnknowCommandException : public ParseException
-    {
-    public:
-        const char* what() const throw() {
-            return "[PARSE ERROR] : unknown command\n"; 
-        }
-    };
-
     class InvalidColumnNameListException : public ParseException
     {
     public:
         const char* what() const throw() {
             return "[PARSE ERROR] : invalid column name list\n"; 
-        }
-    };
-
-    class NoFromKeywordException  : public ParseException
-    {
-    public:
-        const char* what() const throw() {
-            return "[PARSE ERROR] : expected FROM keyword\n"; 
         }
     };
 

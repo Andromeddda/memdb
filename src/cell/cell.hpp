@@ -96,6 +96,8 @@ namespace memdb
         Cell operator| (const Cell& other) const;
         Cell operator& (const Cell& other) const;
         Cell operator^ (const Cell& other) const;
+
+        std::string ToString() const;
         
 
     private:

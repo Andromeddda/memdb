@@ -118,4 +118,32 @@ namespace memdb
         }
     }
 
+
+    void Table::print(std::ostream& os)
+    {
+        size_t alignment = 0;
+
+        for (auto &col : columns_)
+            alignment = std::max(alignment, col.name_.size());
+
+        std::string bar = std::string((alignment + 3)*width() + 1, '-') + '\n';
+
+        os << bar;
+
+        os << "| " << name_ << std::string(bar.size() - name_.size() - 5, ' ') << " |\n";
+        os << bar;
+
+        for (auto &col : columns_) {
+            os << "| ";
+            os << col.name_;
+            os << std::string(alignment - col.name_.size(), ' ');
+            os << ' ';
+        }
+        os << "|\n";
+        os << bar;
+    }
+
+    // -----------------
+    // | 12345 | 12345 |
+
 } // namespace memdb

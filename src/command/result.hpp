@@ -31,12 +31,13 @@ namespace memdb
         bool ok() const             { return status_; }
         Table* get_table() const    { return table_; }
 
-        std::ostream& operator<< (std::ostream& os) const;
+        void print(std::ostream& os);
     private:
         Table* table_;
         bool   status_;
         std::string error_;
     };
 } // namespace memdb
+
 
 #endif // HEADER_GUARD_COMMAND_RESULT_H

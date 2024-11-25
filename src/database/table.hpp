@@ -42,7 +42,6 @@ namespace memdb
         size_t size() const;    // Number of rows
         size_t column_position(const std::string& column_name) const;
 
-
         //
         // Query methods
         //
@@ -58,6 +57,8 @@ namespace memdb
 
         void drop(const Expression& where);
 
+        void print(std::ostream& os);
+
     private:
         std::string
             name_;          // Table name
@@ -72,5 +73,6 @@ namespace memdb
             rows_;          // List of rows
     };
 } // namespace memdb
+
 
 #endif // HEADER_GUARD_DATABASE_TABLE_H

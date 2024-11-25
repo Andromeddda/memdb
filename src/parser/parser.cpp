@@ -27,6 +27,7 @@ namespace memdb
     {
         std::string table_name;
 
+        parse_whitespaces();
         if (!parse_name(table_name))
             return false;
 
@@ -48,11 +49,16 @@ namespace memdb
             return false;
         }
 
+        parse_whitespaces();
+
         // parse table name and columns
-        if (!parse_name(table_name) || !parse_column_description_list(columns)) {
-            pos_ = start_pos;
-            return false;
-        }
+        if (!parse_name(table_name))
+            throw InvalidTableNameException();
+
+        parse_whitespaces();
+
+        if (!parse_column_description_list(columns))
+            throw InvalidColumnDescriptionException();
 
         command = Command(CommandNodePointer(new SQLCreateTable(table_name, columns)));
 
@@ -187,7 +193,7 @@ namespace memdb
 
         // parse FROM keyword
         if (!parse_keyword(keyword_type) || keyword_type != From)
-            throw NoFromKeywordException();
+            throw IncorrectKeywordException();
 
         parse_whitespaces();
 
@@ -1014,7 +1020,7 @@ namespace memdb
 
         while (parse_pattern_static(token_pattern, pos_, end_, token)) {
             if (token.empty())
-                throw IncorrectNameException();
+                throw InvalidNameException();
 
             res.push_back(token);
 
@@ -1095,7 +1101,7 @@ namespace memdb
         if (root == end) 
         {
             if (token_is_operation(*begin))
-                throw IncorrectNameException();
+                throw InvalidNameException();
 
             return ExpressionNodePointer(
                     new ValueExpression(*begin));

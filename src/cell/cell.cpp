@@ -2,6 +2,18 @@
 #include <algorithm>
 
 namespace memdb {
+    #define UCHAR_TO_HEX(c) (((c) < (unsigned char)0xA) ? (char)((char)'0' + (char)(c)) : (char)((char)'A' + (char)(c) - (char)10))
+
+    std::string byte_to_str(const std::byte& b)
+    {
+        std::string res = "";
+        unsigned char c = (unsigned char)b;
+
+        res = UCHAR_TO_HEX(c & 0xF) + res;
+        res = UCHAR_TO_HEX((c >> 4) & 0xF) + res;
+
+        return res;
+    }
 
     static const std::unordered_map<CellType, std::string>
         type_to_str {
@@ -388,6 +400,24 @@ namespace memdb {
         for (auto i = 0LU; i < bt1.size(); ++i)
             bt1[i] ^= bt2[i];
         return Cell(bt1);
+    }
+
+    std::string Cell::ToString() const
+    {
+        CellType type = get_type();
+
+        switch (type)
+        {
+        case CellType::BOOL: return get_bool() ? "true" : "false";
+        case CellType::INT32: return std::to_string(get_int());
+        case CellType::STRING: return get_string();
+        default:
+            std::string res = "0x";
+            std::vector<std::byte> bts = get_bytes();
+            for (std::byte &b : bts)
+                res += byte_to_str(b);
+            return res;
+        }
     }
 } //namespace memdb
 

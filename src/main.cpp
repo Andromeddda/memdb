@@ -10,15 +10,28 @@
 using namespace std;
 using namespace memdb;
 
+
 int main (void) 
 {
-	Parser p("SELECT a, b FROM table1 WHERE a > 10 && b < 3");
+	std::string input;
+	Database db;
 
-	Command c;
-	p.parse(c);
+	while (1) {
+		cout << "memdb > ";
+		std::getline(cin, input);
 
-	cout << "Exit\n";
+		if (input == ".exit") break;
 
-	(void)c;
+		Parser p{input};
+
+		Command c;
+
+		p.parse(c);
+
+		auto res = c.execute(&db);
+
+		if (res.ok())
+			res.print(cout);
+	}
 	return 0;
 }

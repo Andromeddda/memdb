@@ -16,6 +16,7 @@ set(SOURCE_FILES
         src/command/command.cpp
         src/expression/expression.cpp
         src/cell/cell.cpp
+        src/command/result.cpp
 )
 
 set(TEST_FILES

@@ -1,12 +1,11 @@
 #include "command/result.hpp"
+#include "database/table.hpp"
 
 namespace memdb 
 {
-    ostream Result::operator<< (std::ostream& os) const
+    void Result::print(std::ostream& os)
     {
-        if (!table_ || !status_) return os;
-        os << *table_;
-
-        return os;
+        if (!table_ || !status_) return;
+        table_->print(os);
     }
 } // namespace memdb
