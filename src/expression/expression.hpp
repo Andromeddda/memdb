@@ -31,22 +31,22 @@ namespace memdb
     class Expression
     {
     public:
-        // Expressions are not default constructible or copyalbe
-        Expression()                                    = delete;
-        Expression(const Expression& other)             = delete;
-        Expression& operator=(const Expression& other)  = delete;
+        // Expressions are not default constructible
+        Expression() = default;
 
-        // Expressions are movable
-        Expression(Expression&& other)             = default;
-        Expression& operator=(Expression&& other)  = default;
+        Expression(const Expression& other) = default;
+        Expression(Expression&& other)      = default;
+
+        Expression& operator=(const Expression& other)  = default;
+        Expression& operator=(Expression&& other)       = default;
 
         Cell evaluate(Row* row) const;
         ~Expression() = default;
     private:
         friend class Parser;
-        Expression(std::unique_ptr<ExpressionNode> root);
+        Expression(ExpressionNodePointer root);
 
-        std::unique_ptr<ExpressionNode> root_;
+        ExpressionNodePointer root_;
     };
 
     // Leave of ExpressionNode tree
@@ -65,12 +65,12 @@ namespace memdb
     class UnaryExpression : public ExpressionNode
     {
     public:
-        UnaryExpression(std::unique_ptr<ExpressionNode> lhs, Operation op);
+        UnaryExpression(ExpressionNodePointer lhs, Operation op);
         ~UnaryExpression() override = default;
 
         Cell evaluate(Row* row) override;
     private:
-        std::unique_ptr<ExpressionNode> lhs_;
+        ExpressionNodePointer lhs_;
         Operation op_;
     };
 
@@ -78,14 +78,14 @@ namespace memdb
     class BinaryExpression : public ExpressionNode
     {
     public:
-        BinaryExpression(std::unique_ptr<ExpressionNode> lhs, 
-            std::unique_ptr<ExpressionNode> rhs, Operation op);
+        BinaryExpression(ExpressionNodePointer lhs, 
+            ExpressionNodePointer rhs, Operation op);
         ~BinaryExpression() override = default;
 
         Cell evaluate(Row* row) override;
     private:
-        std::unique_ptr<ExpressionNode> lhs_;
-        std::unique_ptr<ExpressionNode> rhs_;
+        ExpressionNodePointer lhs_;
+        ExpressionNodePointer rhs_;
         Operation op_;
     };
 

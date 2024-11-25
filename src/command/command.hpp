@@ -12,19 +12,9 @@
 
 namespace memdb 
 {
-    class Database;
+    class Database; // forward declaration
 
-    class Command
-    {
-    public:
-        Result execute(Database* database);
-    private:
-        friend class Parser;
-        Command(std::unique_ptr<SQLCommand>& root);
-
-        std::unique_ptr<SQLCommand> root_;
-    };
-
+    // Abstract class for command tree node
     class SQLCommand 
     {
     public:
@@ -33,7 +23,27 @@ namespace memdb
         virtual Result execute(Database* database) = 0;
     };
 
+    // Wrapper class for command tree
+    class Command
+    {
+    public:
+        Command() = default;     
+        Command(const Command& other)             = default;
+        Command& operator= (const Command& other) = default;
 
+        Command(Command&& other)             = default;
+        Command& operator= (Command&& other) = default;
+
+        Result execute(Database* database);
+    private:
+        // Only parser can construct command trees
+        friend class Parser;
+        Command(CommandNodePointer root);
+
+        CommandNodePointer root_;
+    };
+
+    // Leave of command tree
     class GetTable : public SQLCommand
     {
     public:
@@ -58,9 +68,8 @@ namespace memdb
         Result execute(Database* database) override;
 
     private:
-        const std::string name_; // Name of the table to create
-
-        const std::vector<Column> columns_; // Column descriptions
+        const std::string name_;    // Name of the table to create
+        const std::vector<Column> columns_;
     };
 
     class SQLInsertOrdered : public SQLCommand
@@ -70,7 +79,6 @@ namespace memdb
         SQLInsertOrdered(const char*   name, const std::vector<Cell>& data);
 
         // Insert a row_ to a table with provided name
-        // Return a smart pointer to the same table
         Result execute(Database* database) override;
 
     private:
@@ -84,8 +92,7 @@ namespace memdb
         SQLInsertUnordered(const std::string& name, const std::unordered_map<std::string, Cell>& data);
         SQLInsertUnordered(const char*   name, const std::unordered_map<std::string, Cell>& data);
 
-        // Insert a row_ to a table with provided name
-        // Return a smart pointer to the same table
+        // Insert a row to a table with provided name
         Result execute(Database* database) override;
 
     private:
@@ -97,7 +104,7 @@ namespace memdb
     class SQLSelect : public SQLCommand
     {
     public:
-        SQLSelect(const std::vector<std::string>& column_names, std::unique_ptr<SQLCommand>& argument, 
+        SQLSelect(const std::vector<std::string>& column_names, CommandNodePointer& argument, 
             Expression& where);
 
         // Allocate new table
@@ -106,7 +113,7 @@ namespace memdb
     private:
         std::vector<std::string> column_names_;  // Pairs of table-column names
 
-        std::unique_ptr<SQLCommand> 
+        CommandNodePointer
                 argument_;   // A table to select from, represented as a Result.
                              // If the table is provided straightforward by name, GetTable class is used
         
@@ -134,22 +141,14 @@ namespace memdb
     class SQLDelete : public SQLCommand
     {
     public:
-        SQLDelete(Expression& where);
+        SQLDelete(const std::string& name, Expression& where);
 
         Result execute(Database* database) override;
 
     private:
+        const std::string name_; // table name
         Expression where_;     // Expression tree of conditions provided with WHERE 
     };
-
-
-    // class GetTable;
-    // class SQLCreateTable;
-    // class SQLInsertOrdered;
-    // class SQLInsertUnordered;
-    // class SQLSelect;
-    // class SQLUpdate;
-    // class SQLDelete;
 
     class SQLJoin;
     class SQLCreateIndex;

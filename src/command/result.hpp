@@ -31,7 +31,7 @@ namespace memdb
         bool ok() const             { return status_; }
         Table* get_table() const    { return table_; }
 
-        std::ostream& operator<< (std::ostream& os);
+        std::ostream& operator<< (std::ostream& os) const;
     private:
         Table* table_;
         bool   status_;

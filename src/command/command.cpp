@@ -10,8 +10,8 @@ namespace memdb
         return root_->execute(database);
     }
 
-    Command::Command(std::unique_ptr<SQLCommand>& root)
-    : root_(std::move(root))
+    Command::Command(CommandNodePointer root)
+    : root_(root)
     { }
 
 
@@ -119,8 +119,8 @@ namespace memdb
 
 
     SQLSelect::SQLSelect(const std::vector<std::string>& column_names, 
-        std::unique_ptr<SQLCommand>& argument, Expression& where)
-    : column_names_(column_names), argument_(std::move(argument)), where_(std::move(where))
+        CommandNodePointer& argument, Expression& where)
+    : column_names_(column_names), argument_(argument), where_(where)
     { }
 
         // Allocate new table
@@ -160,6 +160,17 @@ namespace memdb
         {
             return Result(ex.what());
         }
+    }
+
+
+    SQLDelete::SQLDelete(const std::string& name, Expression& where)
+    : name_(name), where_(where)
+    { }
+
+    Result SQLDelete::execute(Database* database)
+    {
+        (void)database;
+        return Result("TODO: delete");
     }
 
 

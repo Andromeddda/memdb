@@ -15,7 +15,7 @@ namespace memdb
     {
     public:
         const char* what() const throw() {
-            return "Invalid escape sequence in string\n"; 
+            return "[PARSE ERROR] : Invalid escape sequence in string\n"; 
         }
     };
 
@@ -23,7 +23,7 @@ namespace memdb
     {
     public:
         const char* what() const throw() {
-            return "Invalid hex value\n"; 
+            return "[PARSE ERROR] : Invalid hex value\n"; 
         }
     };
 
@@ -31,7 +31,7 @@ namespace memdb
     {
     public:
         const char* what() const throw() {
-            return "Invalid attribute list\n"; 
+            return "[PARSE ERROR] : Invalid attribute list\n"; 
         }
     };
 
@@ -39,15 +39,15 @@ namespace memdb
     {
     public:
         const char* what() const throw() {
-            return "Invalid column description\n"; 
+            return "[PARSE ERROR] : Invalid column description\n"; 
         }
     };
 
-    class InvalidColumnNameException : public ParseException
+    class InvalidTableNameException : public ParseException
     {
     public:
         const char* what() const throw() {
-            return "Invalid column name\n"; 
+            return "[PARSE ERROR] : Invalid table name\n"; 
         }
     };
 
@@ -55,7 +55,15 @@ namespace memdb
     {
     public:
         const char* what() const throw() {
-            return "Invalid row initialization by unordered assignment\n"; 
+            return "[PARSE ERROR] : Invalid row initialization by unordered assignment\n"; 
+        }
+    };
+
+    class InvalidSetAssignmentException : public ParseException
+    {
+    public:
+        const char* what() const throw() {
+            return "[PARSE ERROR] : Invalid list of set assignment\n"; 
         }
     };
 
@@ -63,7 +71,7 @@ namespace memdb
     {
     public:
         const char* what() const throw() {
-            return "Invalid row initialization by unordered assignment\n"; 
+            return "[PARSE ERROR] : Invalid row initialization by unordered assignment\n"; 
         }
     };
 
@@ -71,7 +79,7 @@ namespace memdb
     {
     public:
         const char* what() const throw() {
-            return "Incorrect sequence of parenthesis\n"; 
+            return "[PARSE ERROR] : Incorrect sequence of parenthesis\n"; 
         }
     };
 
@@ -79,7 +87,7 @@ namespace memdb
     {
     public:
         const char* what() const throw() {
-            return "Empty expression or empty parenthesis\n"; 
+            return "[PARSE ERROR] : Empty expression or empty parenthesis\n"; 
         }
     };
 
@@ -87,9 +95,34 @@ namespace memdb
     {
     public:
         const char* what() const throw() {
-            return "Incorrect variable name provided to exception. Name cannot be empty, an operator token, or contain space symbols\n"; 
+            return "[PARSE ERROR] : Incorrect variable name provided to exception. Name cannot be empty, an operator token, or contain space symbols\n"; 
         }
     };
+
+    class UnknowCommandException : public ParseException
+    {
+    public:
+        const char* what() const throw() {
+            return "[PARSE ERROR] : unknown command\n"; 
+        }
+    };
+
+    class InvalidColumnNameListException : public ParseException
+    {
+    public:
+        const char* what() const throw() {
+            return "[PARSE ERROR] : invalid column name list\n"; 
+        }
+    };
+
+    class NoFromKeywordException  : public ParseException
+    {
+    public:
+        const char* what() const throw() {
+            return "[PARSE ERROR] : expected FROM keyword\n"; 
+        }
+    };
+
 
 } // namespace memdb
 

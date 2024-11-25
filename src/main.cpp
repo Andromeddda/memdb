@@ -8,45 +8,17 @@
 
 
 using namespace std;
-
-template <typename A, typename B>
-ostream& operator<< (ostream& os, unordered_map<A, B> mp)
-{
-	for (auto &[a, b] : mp) {
-		os << "{ " << a << ": " << b << " } ";
-	}
-	os << '\n';
-	return os;
-}
+using namespace memdb;
 
 int main (void) 
 {
-	std::unordered_map<int, int>
-		mp;
+	Parser p("SELECT a, b FROM table1 WHERE a > 10 && b < 3");
 
-	for (int i = 0; i < 10; i++)
-		mp[i] = i*i;
+	Command c;
+	p.parse(c);
 
-	cout << mp;
+	cout << "Exit\n";
 
-	
-
-	int max = 0;
-	for (int i = 0; i < (int)mp.size(); i++)
-	{
-		if (mp.find(i) == mp.end())
-			continue;
-
-		if (!(mp[i] % 2 == 1))
-			mp[max++] = mp[i];
-	}
-
-	int size = (int)mp.size();
-	for (int i = max; i < size; i++)
-		mp.erase(i);
-
-	cout << mp;
-
-
+	(void)c;
 	return 0;
 }

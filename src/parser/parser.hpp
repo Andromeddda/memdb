@@ -35,12 +35,26 @@ namespace memdb
 
     class Expression;
     class ExpressionNode;
+    class Command;
     class SQLCommand;
+
+    typedef typename std::shared_ptr<ExpressionNode> 
+        ExpressionNodePointer;
+
+    typedef typename std::shared_ptr<SQLCommand> 
+        CommandNodePointer;
 
     class Parser
     {
+        typedef std::string::const_iterator 
+            Position;
+
+        std::string query_;
+
+        Position pos_;
+        Position end_;
     public:
-        Parser(std::string&& query);
+        Parser(const std::string& query);
 
         // Parser is neither copyable nor default constructible
         Parser() = delete;
@@ -51,15 +65,19 @@ namespace memdb
         Parser(Parser&& other) = default;
         Parser& operator= (Parser&& other) = default;
 
-        SQLCommand* parse();
+        bool parse(Command& ret);
 
     private:
-        typedef std::string::const_iterator Position;
-        std::string query_;
-
         // general parsing functions
         bool parse_pattern(std::regex regexp);
         bool parse_pattern(std::regex regexp, std::string& ret);
+
+        bool parse_get_table(Command& command);
+        bool parse_create_table(Command& command);
+        bool parse_insert(Command& command);
+        bool parse_update(Command& command);
+        bool parse_select(Command& command);
+        bool parse_delete(Command& command);
 
         // punctuation parsing
         bool parse_whitespaces();
@@ -71,6 +89,7 @@ namespace memdb
         bool parse_command(CommandType& ret);
         bool parse_keyword(KeywordType& ret);
         bool parse_name(std::string& ret);
+        bool parse_column_name(std::string& ret);
         bool parse_subquery(std::string& ret);
 
         // parsing values
@@ -86,25 +105,28 @@ namespace memdb
         bool parse_column_type(CellType& ret);
         bool parse_column_description(Column &ret);
         bool parse_column_description_list(std::vector<Column>& ret);
+        bool parse_column_names_list(std::vector<std::string>& ret);
 
         // parsing rows
         bool parse_row_ordered(std::vector<Cell>& ret);
         bool parse_row_unordered(std::unordered_map<std::string, Cell>& ret);
 
-        bool parse_column_name(std::string& ret);
+        // parsing expression
         bool parse_expression(Expression& ret);
+
+        // parsing set assignment
+        bool parse_set_assignment(std::unordered_map<std::string, Expression>& set);
 
         using VecPosition = typename std::vector<std::string>::const_iterator;
 
         static bool parse_pattern_static(std::regex regexp, Position& pos_, Position& end_);
         static bool parse_pattern_static(std::regex regexp, Position& pos_, Position& end_, std::string& ret);
-        static std::vector<std::string> tokenize_expression(const std::string& str);
-        static std::unique_ptr<ExpressionNode> parse_expression(const std::vector<std::string>& tokens);
-        static std::unique_ptr<ExpressionNode> parse_expression_r(const std::vector<std::string>& tokens, 
-            VecPosition pos, VecPosition end);
 
-        Position pos_;
-        Position end_;
+        // static parsing expressions
+        static std::vector<std::string> tokenize_expression(const std::string& str);
+        static ExpressionNodePointer parse_expression(const std::vector<std::string>& tokens);
+        static ExpressionNodePointer parse_expression_r(const std::vector<std::string>& tokens, 
+            VecPosition pos, VecPosition end);
     };
 } // namespace memdb
 

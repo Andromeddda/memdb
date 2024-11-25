@@ -7,38 +7,304 @@
 
 namespace memdb 
 {
+    bool Parser::parse(Command& ret)
+    {
+        if (parse_create_table(ret))
+            return true;
+        if (parse_insert(ret))
+            return true;
+        if (parse_update(ret))
+            return true;
+        if (parse_select(ret))
+            return true;
+        if (parse_delete(ret))
+            return true;
 
-    // SQLCommand* Parser::parse() {
+        return false;
+    }
 
-    // }
+    bool Parser::parse_get_table(Command& command)
+    {
+        std::string table_name;
+
+        if (!parse_name(table_name))
+            return false;
+
+        command = Command(CommandNodePointer(new GetTable(table_name)));
+        return true;
+    }
+
+    bool Parser::parse_create_table(Command& command)
+    {
+        Position start_pos = pos_;
+
+        CommandType         command_type;
+        std::string         table_name;
+        std::vector<Column> columns;
+
+        // parse CREATE TABLE command name
+        if (!parse_command(command_type) || command_type != CreateTable) {
+            pos_ = start_pos;
+            return false;
+        }
+
+        // parse table name and columns
+        if (!parse_name(table_name) || !parse_column_description_list(columns)) {
+            pos_ = start_pos;
+            return false;
+        }
+
+        command = Command(CommandNodePointer(new SQLCreateTable(table_name, columns)));
+
+        return true;
+    }
+
+    bool Parser::parse_insert(Command& command)
+    {
+        Position start_pos = pos_;
+
+        CommandType command_type;
+        KeywordType keyword_type;
+        std::string table_name;
+
+        bool use_ordered    = false;
+
+        std::vector<Cell>   ordered;
+        std::unordered_map<std::string, Cell> unordered;
+
+        // Parse command name
+        if (!parse_command(command_type) || command_type != Insert) {
+            pos_ = start_pos;
+            return false;
+        }
+
+        // parse row data
+        if (parse_row_ordered(ordered)) {
+            use_ordered = true;
+        }
+        else if (!parse_row_unordered(unordered)) {
+            pos_ = start_pos;
+            return false;
+        }
+
+        // parse TO keyword
+        if (!parse_keyword(keyword_type) || keyword_type != To || !parse_name(table_name))  {
+            pos_ = start_pos;
+            return false;
+        }
+
+        // Result
+        if (use_ordered)
+            command = Command(CommandNodePointer(new SQLInsertOrdered(table_name, ordered)));
+        else
+            command = Command(CommandNodePointer(new SQLInsertUnordered(table_name, unordered)));
+
+        return true;
+    }
+
+
+    bool Parser::parse_update(Command& command)
+    {
+        Position start_pos = pos_;
+
+        CommandType command_type;
+        KeywordType keyword_type;
+
+        std::string table_name;
+        std::unordered_map<std::string, Expression> set;
+        Expression where;
+
+        // Parse UPDATE command name
+        if (!parse_command(command_type) || command_type != Update) {
+            pos_ = start_pos;
+            return false;
+        }
+
+        // parse table name
+        if (!parse_name(table_name))  {
+            pos_ = start_pos;
+            return false;
+        }
+
+        // parse SET keyword
+        if (!parse_keyword(keyword_type) || keyword_type != Set) {
+            pos_ = start_pos;
+            return false;
+        }
+
+        // parse set assignment
+        if (!parse_set_assignment(set)) {
+            pos_ = start_pos;
+            return false;
+        }
+
+        // try parse WHERE keyword
+        if (!parse_keyword(keyword_type)) {
+            where = Expression(ExpressionNodePointer(nullptr));
+            command = Command(CommandNodePointer(new SQLUpdate(table_name, set, where)));
+            return true;
+        }
+        else if (keyword_type != Where)  {
+            pos_ = start_pos;
+            return false;
+        }
+
+        // parse condition
+        if (!parse_expression(where))  {
+            pos_ = start_pos;
+            return false;
+        }
+
+        command = Command(CommandNodePointer(new SQLUpdate(table_name, set, where)));
+
+        return true;
+    }
+
+
+    bool Parser::parse_select(Command& command)
+    {
+        Position start_pos = pos_;
+
+        CommandType command_type;
+        KeywordType keyword_type;
+
+        Command table;
+        std::vector<std::string> columns;
+        Expression where;
+
+        // Parse SELECT command name
+        if (!parse_command(command_type) || command_type != Select) {
+            pos_ = start_pos;
+            return false;
+        }
+
+        parse_whitespaces();
+
+        // Parse column names list
+        if (!parse_column_names_list(columns))
+            throw InvalidColumnNameListException();
+        parse_whitespaces();
+
+        // parse FROM keyword
+        if (!parse_keyword(keyword_type) || keyword_type != From)
+            throw NoFromKeywordException();
+
+        parse_whitespaces();
+
+        // Parse subquery
+        if (!parse_get_table(table)) {
+            std::string subquery;
+
+            if (!parse_subquery(subquery)) {
+                pos_ = start_pos;
+                return false;
+            }
+
+            Parser subquery_parser(subquery);
+
+            if (!subquery_parser.parse(table)) {
+                pos_ = start_pos;
+                return false;
+            }
+        }
+
+        parse_whitespaces();
+
+        // try parse WHERE
+        if (!parse_keyword(keyword_type)) {
+            where = Expression(ExpressionNodePointer(nullptr));
+            command = Command(CommandNodePointer(new SQLSelect(columns, table.root_, where)));
+            return true;
+        }
+        else if (keyword_type != Where)  {
+            pos_ = start_pos;
+            return false;
+        }
+
+        parse_whitespaces();
+
+        if (!parse_expression(where))  {
+            pos_ = start_pos;
+            return false;
+        }
+
+        command = Command(CommandNodePointer(new SQLSelect(columns, table.root_, where)));
+
+        return true;
+    }
+
+    bool Parser::parse_delete(Command& command)
+    {
+        Position start_pos = pos_;
+
+        CommandType command_type;
+        KeywordType keyword_type;
+
+        std::string table_name;
+        Expression where;
+
+        // Parse DELETE command name
+        if (!parse_command(command_type) || command_type != Delete) {
+            pos_ = start_pos;
+            return false;
+        }
+
+        // parse table name
+        if (!parse_name(table_name))  {
+            pos_ = start_pos;
+            return false;
+        }
+
+        // try parse WHERE keyword
+        if (!parse_keyword(keyword_type)) {
+            where = Expression(ExpressionNodePointer(nullptr));
+            command = Command(CommandNodePointer(new SQLDelete(table_name, where)));
+            return true;
+        }
+        else if (keyword_type != Where)  {
+            pos_ = start_pos;
+            return false;
+        }
+
+        // parse condition
+        if (!parse_expression(where))  {
+            pos_ = start_pos;
+            return false;
+        }
+
+        command = Command(CommandNodePointer(new SQLDelete(table_name, where)));
+
+        return true;
+    }
+
 
     static const std::unordered_map<std::string, CommandType>
         str_to_command_mp {
-            {"CREATE TABLE", CreateTable},
-            {"INSERT",     Insert},
-            {"UPDATE",     Update},
-            {"SELECT",     Select},
-            {"DELETE",     Delete},
-            {"JOIN",     Join},
-            {"CREATE INDEX", CreateIndex}
+            {"CREATE TABLE",    CreateTable},
+            {"INSERT",          Insert},
+            {"UPDATE",          Update},
+            {"SELECT",          Select},
+            {"DELETE",          Delete},
+            {"JOIN",            Join},
+            {"CREATE INDEX",    CreateIndex}
         };
 
     static const std::unordered_map<std::string, KeywordType>
         str_to_keyword_mp {
-            {"TO",         To},
+            {"TO",       To},
             {"FROM",     From},
-            {"WHERE",     Where},
-            {"SET",     Set},
-            {"ON",         On},
+            {"WHERE",    Where},
+            {"SET",      Set},
+            {"ON",       On},
             {"INDEX ON", IndexOn},
-            {"BY",         By}
+            {"BY",       By}
         };
 
     static const std::unordered_map<std::string, ColumnAttribute>
         str_to_attr_mp {
-            {"key", Key},
-            {"unique", Unique},
-            {"autoincrement", Autoincrement}
+            {"key",             Key},
+            {"unique",          Unique},
+            {"autoincrement",   Autoincrement}
         };
 
     static const std::unordered_map<std::string, Operation> 
@@ -63,9 +329,11 @@ namespace memdb
             { ">=", GEQ } 
         };
 
+    // Priorities of operations 
+    // NOTE: the smaller the number the lower the priority (unlike )
     static const std::unordered_map<std::string, size_t>
         str_to_prior = {
-            { "||", 0 },
+            { "||", 0 },            
             { "&&", 1 },
             { "|" , 2 },
             { "^" , 3 },
@@ -74,7 +342,7 @@ namespace memdb
             { "!=", 5 },
             { "<" , 6 },
             { "<=", 6 },
-             { ">" , 6 },
+            { ">",  6 },
             { ">=", 6 },
             { "+" , 7 },
             { "-" , 7 },
@@ -175,7 +443,7 @@ namespace memdb
         return str_to_attr_mp.at(str); // return attribute from map
     }
 
-    Parser::Parser(std::string&& query)
+    Parser::Parser(const std::string& query)
     : query_(query), pos_(), end_()
     { 
         pos_ = query_.begin();
@@ -297,9 +565,12 @@ namespace memdb
 
     bool Parser::parse_command(CommandType& ret)
     {
+        // static const std::regex 
+        //     pattern{"(?i)(CREATE\\s+TABLE)|(INSERT)|(SELECT)|(UPDATE)|(DELETE)"};
+        // // Note: (?i) is a flag that makes pattern  case insensitive
+
         static const std::regex 
-            pattern{"(?i)(CREATE\\s+TABLE)|(INSERT)|(SELECT)|(UPDATE)|(DELETE)"};
-        // Note: (?i) is a flag that makes pattern  case insensitive
+            pattern{"([Cc][Rr][Ee][Aa][Tt][Ee](\\s+)[Tt][Aa][Bb][Ll][Ee])|([Ii][Nn][Ss][Ee][Rr][Tt])|([Uu][Pp][Dd][Aa][Tt][Ee])|([Ss][Ee][Ll][Ee][Cc][Tt])|([Dd][Ee][Ll][Ee][Tt][Ee])"};
 
         std::string str;
         bool res = parse_pattern(pattern, str);
@@ -311,9 +582,12 @@ namespace memdb
 
     bool Parser::parse_keyword(KeywordType& ret)
     {
+        // static const std::regex 
+        //     pattern{"(?i)(TO)|(FROM)|(WHERE)|(SET)|(ON)|(INDEX\\s+ON)|(BY)"};
+        // // Note: (?i) is a flag that makes pattern  case insensitive
+
         static const std::regex 
-            pattern{"(?i)(TO)|(FROM)|(WHERE)|(SET)|(ON)|(INDEX\\s+ON)|(BY)"};
-        // Note: (?i) is a flag that makes pattern  case insensitive
+            pattern{"([Tt][Oo])|([Ff][Rr][Oo][Mm])|([Ww][Hh][Ee][Rr][Ee])|([Ss][Ee][Tt])|([Oo][Nn])|([Ii][Nn][Dd][Ee][Xx]\\s+[Oo][Nn])|([Bb][Yy])"};
 
         std::string str;
         bool res = parse_pattern(pattern, str);
@@ -326,15 +600,26 @@ namespace memdb
     bool Parser::parse_name(std::string& ret)
     {
         static const std::regex 
-            pattern{"[A-Za-z0-9_\\-]+"};
+            pattern{"[A-Za-z0-9_]+"};
         return parse_pattern(pattern, ret);
     }
 
     bool Parser::parse_subquery(std::string& ret) 
     {
         static const std::regex 
-            pattern{"\\(.+\\)"};
-        return parse_pattern(pattern, ret);
+            pattern{".+\\)"};
+
+        static const std::regex 
+            open_par{"\\("};
+
+        if (!parse_pattern(open_par))
+            return false;
+
+        parse_string(ret);
+        ret.pop_back(); // remove close parenthesis
+
+        return true;
+
     }
 
     bool Parser::parse_int(int& ret)
@@ -499,18 +784,20 @@ namespace memdb
         std::string name;
         CellType type;
 
+        // attribute list
         parsed_attr = parse_attribute_list(attr);
         parse_whitespaces();
-        parsed_name = parse_name(name);
+
+        // column name
+        parsed_name = parse_column_name(name);
 
         if (parsed_attr && !parsed_name)
-
-        if (parsed_attr && !parse_name(name))
             throw InvalidColumnDescriptionException();
 
         if (parsed_name && !parse_colon())
             throw InvalidColumnDescriptionException();
 
+        // column type
         parsed_type = parse_column_type(type);
 
         if (parsed_name && !parsed_type)
@@ -550,6 +837,30 @@ namespace memdb
         parse_whitespaces();
         if (!parse_pattern(close_par))
             throw InvalidColumnDescriptionException();
+
+        return true;
+    }
+
+    bool Parser::parse_column_names_list(std::vector<std::string>& ret)
+    {
+        Position start_pos = pos_;
+
+        ret.clear();
+
+        bool end_of_list = false;
+        while (!end_of_list)
+        {
+            std::string col;
+
+            if (!parse_column_name(col)) {
+                pos_ = start_pos;
+                return false;
+            }
+
+            ret.push_back(col);
+
+            end_of_list = !parse_comma();
+        }
 
         return true;
     }
@@ -628,11 +939,11 @@ namespace memdb
     bool Parser::parse_column_name(std::string& ret)
     {
         static const std::regex 
-            dot{"[A-Za-z0-9_\\.]+"};
+            pattern{"[A-Za-z0-9_\\.]+"};
 
         std::string str;
 
-        bool res = parse_name(str);
+        bool res = parse_pattern(pattern, str);
 
         if (res)
             ret = str;
@@ -654,6 +965,29 @@ namespace memdb
         std::vector<std::string> tokens = tokenize_expression(str);
 
         ret = Expression(parse_expression(tokens));
+
+        return true;
+    }
+
+    bool Parser::parse_set_assignment(std::unordered_map<std::string, Expression>& set)
+    {
+        Position start_pos = pos_;
+
+        bool end_of_list = false;
+        while (!end_of_list)
+        {
+            std::string col;
+            Expression exp;
+
+            if (!parse_column_name(col) || !parse_equal_sign() || !parse_expression(exp)) {
+                pos_ = start_pos;
+                return false;
+            }
+
+            set[col] = exp;
+
+            end_of_list = parse_comma();
+        }
 
         return true;
     }
@@ -702,12 +1036,12 @@ namespace memdb
         return res;
     }
 
-    std::unique_ptr<ExpressionNode> Parser::parse_expression(const std::vector<std::string>& tokens)
+    ExpressionNodePointer Parser::parse_expression(const std::vector<std::string>& tokens)
     {
         return parse_expression_r(tokens, tokens.begin(), tokens.end());
     }
 
-    std::unique_ptr<ExpressionNode> Parser::parse_expression_r(const std::vector<std::string>& tokens, 
+    ExpressionNodePointer Parser::parse_expression_r(const std::vector<std::string>& tokens, 
         VecPosition pos, VecPosition end)
     {
         size_t parenthesis = 0;
@@ -750,10 +1084,10 @@ namespace memdb
         if (root == begin) 
         {
             if (*root == "-")
-                return std::unique_ptr<ExpressionNode>(
+                return ExpressionNodePointer(
                     new UnaryExpression(parse_expression_r(tokens, root + 1, end), NEG));
 
-            return std::unique_ptr<ExpressionNode>(
+            return ExpressionNodePointer(
                     new UnaryExpression(parse_expression_r(tokens, root + 1, end), str_to_op.at(*root)));
         }
 
@@ -763,13 +1097,13 @@ namespace memdb
             if (token_is_operation(*begin))
                 throw IncorrectNameException();
 
-            return std::unique_ptr<ExpressionNode>(
+            return ExpressionNodePointer(
                     new ValueExpression(*begin));
         }
 
 
         // Binary iterator
-        return std::unique_ptr<ExpressionNode>(
+        return ExpressionNodePointer(
                     new BinaryExpression(
                         parse_expression_r(tokens, begin, root), 
                         parse_expression_r(tokens, root + 1, end), 

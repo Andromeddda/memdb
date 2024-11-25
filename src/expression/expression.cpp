@@ -3,12 +3,14 @@
 namespace memdb
 {
 
-    Expression::Expression(std::unique_ptr<ExpressionNode> root)
-    : root_(std::move(root))
+    Expression::Expression(ExpressionNodePointer root)
+    : root_(root ? nullptr : std::move(root))
     { }
 
     Cell Expression::evaluate(Row* row) const
     {
+        if (!row) return false;
+        if (!root_) return true;
         return root_->evaluate(row);
     }
 
@@ -39,12 +41,12 @@ namespace memdb
         column_name_(column_name)
     { }
 
-    UnaryExpression::UnaryExpression(std::unique_ptr<ExpressionNode> lhs, Operation op) :
+    UnaryExpression::UnaryExpression(ExpressionNodePointer lhs, Operation op) :
         lhs_(std::move(lhs)), op_(op)
     { }
 
-    BinaryExpression::BinaryExpression(std::unique_ptr<ExpressionNode> lhs, 
-            std::unique_ptr<ExpressionNode> rhs, Operation op) :
+    BinaryExpression::BinaryExpression(ExpressionNodePointer lhs, 
+            ExpressionNodePointer rhs, Operation op) :
         lhs_(std::move(lhs)), rhs_(std::move(rhs)), op_(op)
     { }
 
