@@ -118,30 +118,94 @@ namespace memdb
         }
     }
 
-
-    void Table::print(std::ostream& os)
+    void print_head_aligned(std::ostream& os, const std::vector<Column>& columns, size_t alignment)
     {
-        size_t alignment = 0;
-
-        for (auto &col : columns_)
-            alignment = std::max(alignment, col.name_.size());
-
-        std::string bar = std::string((alignment + 3)*width() + 1, '-') + '\n';
+        std::string bar = std::string((alignment + 3)*columns.size() + 1, '-') + '\n';
 
         os << bar;
 
-        os << "| " << name_ << std::string(bar.size() - name_.size() - 5, ' ') << " |\n";
-        os << bar;
-
-        for (auto &col : columns_) {
+        for (auto &col : columns) {
             os << "| ";
             os << col.name_;
             os << std::string(alignment - col.name_.size(), ' ');
             os << ' ';
         }
         os << "|\n";
-        os << bar;
     }
+
+    void print_row_aligned(std::ostream& os, const Row& row, size_t alignment)
+    {   
+        // positions indicating how much of each sell are already printed
+        std::vector<size_t> printed(row.size(), 0);
+
+        std::string bar = std::string((alignment + 3)*row.size() + 1, '-') + '\n';
+        os << bar;
+
+
+        // print untill all cells will fit
+        bool fit = false;
+        while (!fit) {
+            fit = true;
+
+            // run through every cell in row
+            for (auto i = 0LU; i < row.size(); i++) {
+                std::string cur = row[i].ToString();
+                os << "| ";
+
+                // if all cell is printed, print spaces to align
+                if (printed[i] >= cur.size()) {
+                    os << std::string(alignment + 1, ' ');
+                    continue;
+                }
+
+                if (cur.size() - printed[i] <= alignment) 
+                {
+                    // print last chunk of string
+                    std::string last_chunk = std::string(cur.begin() + printed[i], cur.end());
+                    os << last_chunk;
+                    os << std::string(alignment - last_chunk.size(), ' ');
+                    os << " ";
+                    printed[i] = cur.size();
+                }
+                else {
+                    // print another chunk of string
+                    os << std::string(cur.begin() + printed[i], cur.begin() + alignment);
+                    os << " ";
+                    printed[i] += alignment;
+                    fit = false;
+                }
+            }
+
+            os << "|\n";
+        }
+    }
+
+    void Table::print(std::ostream& os)
+    {
+        size_t alignment = 0;
+
+
+        for (auto &col : columns_)
+            alignment = std::max(alignment, col.name_.size());
+
+        std::string bar = std::string((alignment + 3)*columns_.size() + 1, '-') + '\n';
+
+        os << '\n';
+        if (!name_.empty()) {
+            os << "TABLE \"";
+            os << name_ << "\"\n";
+        }
+
+
+        print_head_aligned(os, columns_, alignment);
+
+        for (auto &[i, row] : rows_)
+            print_row_aligned(os, *row, alignment);
+
+        os << bar;     
+    }
+
+
 
     // -----------------
     // | 12345 | 12345 |

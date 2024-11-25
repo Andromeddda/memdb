@@ -84,20 +84,25 @@ namespace memdb
             return false;
         }
 
+        parse_whitespaces();
+
         // parse row data
         if (parse_row_ordered(ordered)) {
             use_ordered = true;
         }
-        else if (!parse_row_unordered(unordered)) {
-            pos_ = start_pos;
-            return false;
-        }
+        else if (!parse_row_unordered(unordered))
+            throw InvalidRowDataException();
+
+        parse_whitespaces();
 
         // parse TO keyword
-        if (!parse_keyword(keyword_type) || keyword_type != To || !parse_name(table_name))  {
-            pos_ = start_pos;
-            return false;
-        }
+        if (!parse_keyword(keyword_type) || keyword_type != To)
+            throw IncorrectKeywordException();
+
+        parse_whitespaces();
+
+        if (!parse_name(table_name))
+            throw InvalidTableNameException();
 
         // Result
         if (use_ordered)
@@ -660,13 +665,17 @@ namespace memdb
     bool Parser::parse_string(std::string& ret)
     {
         static const std::regex
-            pattern(".+");
+            pattern("\\\".+\\\"");
 
         std::string str;
         bool res = parse_pattern(pattern, str);
 
-        if (res)
+        if (res) {
+            // remove quotes
+            str.erase(str.begin());
+            str.pop_back();
             ret = str;
+        }
 
         return res;
     }
@@ -700,19 +709,26 @@ namespace memdb
         std::string str_val;
         std::vector<std::byte> bytes_val;
 
-        bool res = false;
-        if ((res = parse_int(int_val)))
+        if (parse_int(int_val)){
             ret =  Cell(int_val);
+            return true;
+        }
 
-        if ((res = parse_bool(bool_val)))
+        if (parse_bool(bool_val)) {
             ret = Cell(bool_val);
+            return true;
+        }
 
-        if ((res = parse_string(str_val)))
+        if (parse_string(str_val)) {
             ret = Cell(str_val);
+            return true;
+        }
 
-        if ((res = parse_bytes(bytes_val)))
+        if (parse_bytes(bytes_val)) {
             ret = Cell(bytes_val);
-        return res;
+            return true;
+        }
+        return false;
     }
 
     bool Parser::parse_attribute(ColumnAttribute& ret) 
@@ -811,7 +827,7 @@ namespace memdb
 
         ret = Column(type, name, attr);
 
-        return parsed_attr && parsed_name && parsed_type;
+        return parsed_name && parsed_type;
     }
 
     bool Parser::parse_column_description_list(std::vector<Column>& ret) 
@@ -873,6 +889,8 @@ namespace memdb
 
     bool Parser::parse_row_ordered(std::vector<Cell>& ret)
     {
+        Position start_pos = pos_;
+
         static const std::regex 
             open_par{"\\("};
 
@@ -886,6 +904,7 @@ namespace memdb
         parse_whitespaces();
         
         bool end_of_list = false;
+        bool parsed_any = false;
 
         while (!end_of_list) {
             Cell cell = Cell();
@@ -893,17 +912,25 @@ namespace memdb
 
             ret.push_back(cell);
             end_of_list = !parse_comma();
+
+            parsed_any = true;
         }
 
         parse_whitespaces();
-        if (!parse_pattern(close_par))
-            throw InvalidPositionedRowException();
+
+        if (!parse_pattern(close_par) || !parsed_any) {
+            pos_ = start_pos;
+            return false;
+
+        }
 
         return true;
     }
 
     bool Parser::parse_row_unordered(std::unordered_map<std::string, Cell>& ret)
     {
+        Position start_pos = pos_;
+
         static const std::regex 
             open_par{"\\("};
 
@@ -917,27 +944,38 @@ namespace memdb
         parse_whitespaces();
         
         bool end_of_list = false;
+        bool parsed_any = false;
 
         while (!end_of_list) {
             Cell cell = Cell();
             std::string name = "";
 
-            if (!parse_name(name))
-                throw InvalidAssignmentRowException();
+            if (!parse_column_name(name)) {
+                pos_ = start_pos;
+                return false;
+            }
 
-            if (!parse_equal_sign())
-                throw InvalidAssignmentRowException();
+            if (!parse_equal_sign()) {
+                pos_ = start_pos;
+                return false;
+            }
 
-            if (!parse_cell_data(cell))
-                throw InvalidAssignmentRowException();
+            if (!parse_cell_data(cell)) {
+                pos_ = start_pos;
+                return false;
+            }
 
             ret[name] = cell;
             end_of_list = !parse_comma();
+
+            parsed_any = true;
         }
 
         parse_whitespaces();
-        if (!parse_pattern(close_par))
-            throw InvalidAssignmentRowException();
+        if (!parse_pattern(close_par) || !parsed_any) {
+            pos_ = start_pos;
+            return false;
+        }
 
         return true;
     }

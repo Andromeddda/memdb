@@ -17,7 +17,7 @@ int main (void)
 	Database db;
 
 	while (1) {
-		cout << "memdb > ";
+		cout << "memdb> ";
 		std::getline(cin, input);
 
 		if (input == ".exit") break;
@@ -26,12 +26,15 @@ int main (void)
 
 		Command c;
 
-		p.parse(c);
+		if (p.parse(c)) {
+			auto res = c.execute(&db);
 
-		auto res = c.execute(&db);
-
-		if (res.ok())
-			res.print(cout);
+			if (res.ok())
+				res.print(cout);
+		}
+		else {
+			cout << "parse error\n";
+		}
 	}
 	return 0;
 }

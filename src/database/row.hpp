@@ -27,6 +27,8 @@ namespace memdb
         Row(Table* table, std::vector<Cell>&& data);
         Row(Table* table, std::unordered_map<std::string, Cell> const &data);
 
+        size_t size() const { return data_.size(); }
+
         Cell& operator[] (size_t index);
         const Cell& operator[] (size_t index) const;
 

@@ -91,6 +91,14 @@ namespace memdb
         }
     };
 
+    class InvalidRowDataException : public ParseException
+    {
+    public:
+        const char* what() const throw() {
+            return "[PARSE ERROR] : Invalid row initializer list\n"; 
+        }
+    };
+
     //
     // Lists
     //
@@ -102,16 +110,15 @@ namespace memdb
         }
     };
 
-    class InvalidAssignmentRowException : public ParseException
+    class InvalidPositionedRowException : public ParseException
     {
     public:
         const char* what() const throw() {
-            return "[PARSE ERROR] : Invalid row initialization by unordered assignment\n"; 
+            return "[PARSE ERROR] : Invalid row initialization by ordered list\n"; 
         }
     };
 
-
-    class InvalidPositionedRowException : public ParseException
+    class InvalidAssignmentRowException : public ParseException
     {
     public:
         const char* what() const throw() {

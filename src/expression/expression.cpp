@@ -4,7 +4,7 @@ namespace memdb
 {
 
     Expression::Expression(ExpressionNodePointer root)
-    : root_(root ? nullptr : std::move(root))
+    : root_(root)
     { }
 
     Cell Expression::evaluate(Row* row) const
