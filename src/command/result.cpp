@@ -13,4 +13,11 @@ namespace memdb
 
         table_->print(os);
     }
+
+
+    Result::~Result()
+    {
+        if (table_ && table_->name().empty())
+            delete table_;
+    }
 } // namespace memdb

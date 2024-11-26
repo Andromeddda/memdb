@@ -17,6 +17,8 @@ namespace memdb
         Result& operator=(const Result& other)  = default;
         Result& operator=(Result&& other)       = default;
 
+        ~Result();
+
         Result(Table* table) 
         : table_(table), status_(true), error_()
         { }
@@ -30,11 +32,11 @@ namespace memdb
         { }
 
         bool ok() const             { return status_; }
-        Table* get_table() const    { return table_.get(); }
+        Table* get_table() const    { return table_; }
 
         void print(std::ostream& os);
     private:
-        std::shared_ptr<Table> table_;
+        Table* table_;
         bool   status_;
         std::string error_;
     };
