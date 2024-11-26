@@ -17,7 +17,7 @@ namespace memdb
 
     Result::~Result()
     {
-        if (table_ && table_->name().empty())
-            delete table_;
+        // if (table_ && table_->name().empty())
+        //     delete table_;
     }
 } // namespace memdb

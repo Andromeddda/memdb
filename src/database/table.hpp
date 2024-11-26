@@ -69,7 +69,7 @@ namespace memdb
         std::vector<Column>
             columns_;
 
-        std::unordered_map<size_t, std::unique_ptr<Row>> 
+        std::unordered_map<size_t, std::shared_ptr<Row>> 
             rows_;          // List of rows
     };
 } // namespace memdb

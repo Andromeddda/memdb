@@ -41,17 +41,17 @@ namespace memdb
 
     void Table::insert(const std::vector<Cell>& data)
     {
-        rows_[this->size() + 1] = std::unique_ptr<Row>(new Row(this, data));
+        rows_[this->size() + 1] = std::shared_ptr<Row>(new Row(this, data));
     }
 
     void Table::insert(std::vector<Cell>&& data)
     {
-        rows_[this->size() + 1] = std::unique_ptr<Row>(new Row(this, data));
+        rows_[this->size() + 1] = std::shared_ptr<Row>(new Row(this, data));
     }
 
     void Table::insert(const std::unordered_map<std::string, Cell>& data)
     {
-        rows_[this->size() + 1] = std::unique_ptr<Row>(new Row(this, data));
+        rows_[this->size() + 1] = std::shared_ptr<Row>(new Row(this, data));
     }
 
     // Query select method
@@ -94,12 +94,15 @@ namespace memdb
 
     void Table::drop(const Expression& where)
     {
-        for (auto &[row_i, row] : rows_)
+        auto It = rows_.begin();
+        while (It != rows_.end())
         {
-            if (!where.evaluate(row.get()).get_bool())
+            if (!where.evaluate(It->second.get()).get_bool()) {
+                It++;
                 continue;
+            }
 
-            rows_.erase(row_i);
+            It = rows_.erase(It);
         }
     }
 
