@@ -1,7 +1,32 @@
 #include "database/database.hpp"
+#include "parser/parse_exception.hpp"
 
 namespace memdb
 {
+
+    Result Database::execute(const std::string& query)
+    {
+        Parser p(query);
+        Command c;
+
+        try 
+        {
+            p.parse(c);
+        }
+        catch (ParseException& ex)
+        {
+            return Result(ex.what());
+        }
+
+        // this must be safe, try catch is inside
+        return c.execute(this);
+    }
+
+    Result Database::execute(const char* query)
+    {
+        return execute(std::string(query));
+    }
+
     void Database::add_table(Table* table) 
     {
         std::string name = table->name();

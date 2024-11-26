@@ -7,7 +7,14 @@ namespace memdb
 
     Result Command::execute(Database* database)
     {
-        return root_->execute(database);
+        try
+        {
+            return root_->execute(database);
+        }
+        catch (std::exception& ex)
+        {
+            return Result(ex.what());
+        }
     }
 
     Command::Command(CommandNodePointer root)

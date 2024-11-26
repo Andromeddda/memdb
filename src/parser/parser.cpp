@@ -20,7 +20,7 @@ namespace memdb
         if (parse_delete(ret))
             return true;
 
-        return false;
+        throw UnknowCommandException();
     }
 
     bool Parser::parse_get_table(Command& command)
@@ -131,23 +131,25 @@ namespace memdb
             return false;
         }
 
+        parse_whitespaces();
+
         // parse table name
-        if (!parse_name(table_name))  {
-            pos_ = start_pos;
-            return false;
-        }
+        if (!parse_name(table_name))
+            throw InvalidTableNameException();
+
+        parse_whitespaces();
 
         // parse SET keyword
-        if (!parse_keyword(keyword_type) || keyword_type != Set) {
-            pos_ = start_pos;
-            return false;
-        }
+        if (!parse_keyword(keyword_type) || keyword_type != Set)
+            throw IncorrectKeywordException();
+
+        parse_whitespaces();
 
         // parse set assignment
-        if (!parse_set_assignment(set)) {
-            pos_ = start_pos;
-            return false;
-        }
+        if (!parse_set_assignment(set))
+            throw InvalidSetAssignmentException();
+
+        parse_whitespaces();
 
         // try parse WHERE keyword
         if (!parse_keyword(keyword_type)) {
@@ -155,16 +157,13 @@ namespace memdb
             command = Command(CommandNodePointer(new SQLUpdate(table_name, set, where)));
             return true;
         }
-        else if (keyword_type != Where)  {
-            pos_ = start_pos;
-            return false;
-        }
+        else if (keyword_type != Where)
+            throw IncorrectKeywordException();
 
-        // parse condition
-        if (!parse_expression(where))  {
-            pos_ = start_pos;
-            return false;
-        }
+        parse_whitespaces();
+
+        if (!parse_expression(where))
+            throw InvalidExpressionException();
 
         command = Command(CommandNodePointer(new SQLUpdate(table_name, set, where)));
 
@@ -194,6 +193,7 @@ namespace memdb
         // Parse column names list
         if (!parse_column_names_list(columns))
             throw InvalidColumnNameListException();
+
         parse_whitespaces();
 
         // parse FROM keyword
@@ -234,10 +234,8 @@ namespace memdb
 
         parse_whitespaces();
 
-        if (!parse_expression(where))  {
-            pos_ = start_pos;
-            return false;
-        }
+        if (!parse_expression(where))
+            throw InvalidExpressionException();
 
         command = Command(CommandNodePointer(new SQLSelect(columns, table.root_, where)));
 
@@ -260,11 +258,13 @@ namespace memdb
             return false;
         }
 
+        parse_whitespaces();
+
         // parse table name
-        if (!parse_name(table_name))  {
-            pos_ = start_pos;
-            return false;
-        }
+        if (!parse_name(table_name))
+            throw InvalidTableNameException();
+
+        parse_whitespaces();
 
         // try parse WHERE keyword
         if (!parse_keyword(keyword_type)) {
@@ -272,16 +272,14 @@ namespace memdb
             command = Command(CommandNodePointer(new SQLDelete(table_name, where)));
             return true;
         }
-        else if (keyword_type != Where)  {
-            pos_ = start_pos;
-            return false;
-        }
+        else if (keyword_type != Where)
+            throw IncorrectKeywordException();
+
+        parse_whitespaces();
 
         // parse condition
-        if (!parse_expression(where))  {
-            pos_ = start_pos;
-            return false;
-        }
+        if (!parse_expression(where))
+            throw InvalidExpressionException();
 
         command = Command(CommandNodePointer(new SQLDelete(table_name, where)));
 

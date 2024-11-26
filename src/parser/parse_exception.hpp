@@ -91,6 +91,14 @@ namespace memdb
         }
     };
 
+    class InvalidExpressionException : public ParseException
+    {
+    public:
+        const char* what() const throw() {
+            return "[PARSE ERROR] : Invalid WHERE-expression\n"; 
+        }
+    };
+
     class InvalidRowDataException : public ParseException
     {
     public:

@@ -11,6 +11,9 @@ namespace memdb
     public:
         Database() = default;
 
+        Result execute(const std::string& query);
+        Result execute(const char* query);
+
         void 
         add_table(Table* table);
 
