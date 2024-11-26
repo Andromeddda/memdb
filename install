@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+mkdir -p ./build
+
+cmake -B ./build -S ./
+
+cmake --build ./build --target memdb
+cmake --build ./build --target prompt
+cmake --build ./build --target run_tests
