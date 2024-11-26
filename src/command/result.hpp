@@ -2,6 +2,7 @@
 #define HEADER_GUARD_COMMAND_RESULT_H
 
 #include <ostream>
+#include <memory>
 
 namespace memdb 
 {
@@ -29,11 +30,11 @@ namespace memdb
         { }
 
         bool ok() const             { return status_; }
-        Table* get_table() const    { return table_; }
+        Table* get_table() const    { return table_.get(); }
 
         void print(std::ostream& os);
     private:
-        Table* table_;
+        std::shared_ptr<Table> table_;
         bool   status_;
         std::string error_;
     };
