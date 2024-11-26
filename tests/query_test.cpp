@@ -113,6 +113,4 @@ TEST(QueryTest, Delete)
     Table* table = res.get_table();
 
     ASSERT_EQ(table->size(), 1);
-
-    delete table;
 }
