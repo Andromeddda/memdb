@@ -90,5 +90,15 @@ namespace memdb
         default: throw InvaludNumberOfOperandsException(op_to_str.at(op_));
         }
     }
-    
+
+
+    ConstExpression::ConstExpression(const Cell& data) :
+    data_(data)
+    { }
+
+    Cell ConstExpression::evaluate(Row* row)
+    {
+        (void)row;
+        return data_;
+    } 
 } // namespace memdb

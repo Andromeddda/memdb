@@ -61,6 +61,17 @@ namespace memdb
         std::string column_name_;
     };
 
+    class ConstExpression : public ExpressionNode
+    {
+    public:
+        ConstExpression(const Cell& data);
+        ~ConstExpression() override = default;
+
+        Cell evaluate(Row* row) override;
+    private:
+        Cell data_;
+    };
+
     // Node of ExpressionNode tree with one child
     class UnaryExpression : public ExpressionNode
     {

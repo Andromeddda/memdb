@@ -20,7 +20,8 @@ set(SOURCE_FILES
 )
 
 set(TEST_FILES
-        tests/parser_test.cpp)
+        tests/parser_test.cpp
+        tests/select_test.cpp)
 
 include_directories(src/)
 include_directories("${CMAKE_SOURCE_DIR}/googletest/include")
@@ -30,7 +31,7 @@ add_executable(memdb ${SOURCE_FILES})
 enable_testing()
 find_package(GTest REQUIRED)
 
-add_executable(run_tests ${TEST_FILES})
+add_executable(run_tests ${TEST_FILES} ${SOURCE_FILES})
 
 target_link_libraries(run_tests GTest::gtest GTest::gtest_main)
 

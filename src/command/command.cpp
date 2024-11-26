@@ -176,8 +176,16 @@ namespace memdb
 
     Result SQLDelete::execute(Database* database)
     {
-        (void)database;
-        return Result("TODO: delete");
+        try
+        {
+            Table* table = database->get_table(name_);
+            table->drop(where_);
+            return Result(table);
+        }
+        catch (DatabaseException& ex)
+        {
+            return Result(ex.what());
+        }
     }
 
 

@@ -634,7 +634,7 @@ namespace memdb
     bool Parser::parse_int(int& ret)
     {
         static const std::regex
-            pattern("([1-9][0-9]*)|([0-9])");
+            pattern("(\\-?[1-9][0-9]*)|([0-9])");
 
         std::string str;
         bool res = parse_pattern(pattern, str);
@@ -1111,7 +1111,7 @@ namespace memdb
                 continue;
             }
 
-            // skip names
+            // skip names and constants
             if (!token_is_operation(*It)) 
                 continue;
 
@@ -1122,7 +1122,7 @@ namespace memdb
             }
         }
 
-        // Unary iterator
+        // Unary expression
         if (root == begin) 
         {
             if (*root == "-")
@@ -1133,23 +1133,138 @@ namespace memdb
                     new UnaryExpression(parse_expression_r(tokens, root + 1, end), str_to_op.at(*root)));
         }
 
-        // Value Iterator
+        // Value or Const expresion
         if (root == end) 
         {
             if (token_is_operation(*begin))
                 throw InvalidNameException();
+
+
+            Cell const_value;
+
+            if (parse_cell_data_static(const_value, *begin))
+                return ExpressionNodePointer(new ConstExpression(const_value));
 
             return ExpressionNodePointer(
                     new ValueExpression(*begin));
         }
 
 
-        // Binary iterator
+        // Binary expression
         return ExpressionNodePointer(
                     new BinaryExpression(
                         parse_expression_r(tokens, begin, root), 
                         parse_expression_r(tokens, root + 1, end), 
                         str_to_op.at(*root)));
+    }
+
+    bool Parser::match_pattern_static(std::regex regexp, const std::string& token)
+    {
+        std::smatch match_result{}; // Match regex in std::string
+
+        bool match_status = std::regex_match(
+            token.begin(), token.end(),              // The iterators limiting the matched sequence
+            match_result,                            // Match result
+            regexp,                                  // Regular expression specifying the pattern
+            std::regex_constants::match_continuous); // Start matching from the beginning (pos_)
+
+        return match_status;
+    }
+
+    bool Parser::parse_int_static(int& ret, const std::string& token)
+    {
+        static const std::regex
+            pattern("(\\-?[1-9][0-9]*)|([0-9])");
+
+        bool res = match_pattern_static(pattern, token);
+
+        if (res)
+            ret = std::stoi(token);
+
+        return res;
+    }
+
+    bool Parser::parse_bool_static(bool& ret, const std::string& token)
+    {
+        static const std::regex
+            pattern("(true)|(false)");
+
+        bool res = match_pattern_static(pattern, token);
+
+        if (res)
+            ret = (token == "true") ? true : false;
+
+        return res;
+    }
+
+
+    bool Parser::parse_string_static(std::string& ret, const std::string& token)
+    {
+        static const std::regex
+            pattern("\\\".+\\\"");
+
+        bool res = match_pattern_static(pattern, token);
+
+        if (res) {
+            // remove quotes
+            ret = token;
+            ret.erase(ret.begin());
+            ret.pop_back();
+        }
+
+        return res;
+    }
+
+    bool Parser::parse_bytes_static(std::vector<std::byte>& ret, const std::string& token)
+    {
+        // Parse as a string
+        static const std::regex
+            pattern("0x[A-F0-9]+");
+
+        bool res = match_pattern_static(pattern, token);
+
+        if (!res) return false;
+        ret.clear();
+
+        // Make the number of characters even
+        std::string str = token;
+        if (str.size() % 2 != 0)
+            str += '0';
+
+        for (auto i = 2LU; i < str.size(); i += 2)
+            ret.push_back(std::byte(
+                two_chars_to_hex(str[i], str[i+1]) ));
+        
+        return true;
+    }
+
+    bool Parser::parse_cell_data_static(Cell& ret, const std::string& token)
+    {
+        int int_val;
+        bool bool_val;
+        std::string str_val;
+        std::vector<std::byte> bytes_val;
+
+        if (parse_int_static(int_val, token)){
+            ret =  Cell(int_val);
+            return true;
+        }
+
+        if (parse_bool_static(bool_val, token)) {
+            ret = Cell(bool_val);
+            return true;
+        }
+
+        if (parse_string_static(str_val, token)) {
+            ret = Cell(str_val);
+            return true;
+        }
+
+        if (parse_bytes_static(bytes_val, token)) {
+            ret = Cell(bytes_val);
+            return true;
+        }
+        return false;
     }
 
 } // namespace memdb

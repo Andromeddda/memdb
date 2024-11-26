@@ -122,11 +122,19 @@ namespace memdb
         static bool parse_pattern_static(std::regex regexp, Position& pos_, Position& end_);
         static bool parse_pattern_static(std::regex regexp, Position& pos_, Position& end_, std::string& ret);
 
+
         // static parsing expressions
         static std::vector<std::string> tokenize_expression(const std::string& str);
         static ExpressionNodePointer parse_expression(const std::vector<std::string>& tokens);
         static ExpressionNodePointer parse_expression_r(const std::vector<std::string>& tokens, 
             VecPosition pos, VecPosition end);
+
+        static bool match_pattern_static(std::regex regexp, const std::string& token);
+        static bool parse_int_static(int& ret, const std::string& token);
+        static bool parse_bool_static(bool& ret, const std::string& token);
+        static bool parse_string_static(std::string& ret, const std::string& token);
+        static bool parse_bytes_static(std::vector<std::byte>& ret, const std::string& token);
+        static bool parse_cell_data_static(Cell& ret, const std::string& token);
     };
 } // namespace memdb
 

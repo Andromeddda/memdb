@@ -141,7 +141,6 @@ namespace memdb
         std::string bar = std::string((alignment + 3)*row.size() + 1, '-') + '\n';
         os << bar;
 
-
         // print untill all cells will fit
         bool fit = false;
         while (!fit) {
